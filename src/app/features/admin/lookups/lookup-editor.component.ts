@@ -8,39 +8,7 @@ import { adminErrorMessage } from '../admin-error';
 
 type LookupTab = 'details' | 'values';
 
-@Component({ selector: 'app-lookup-editor', imports: [FormsModule, RouterLink], template: `
-  <header class="admin-page-header"><div><a class="admin-breadcrumb" routerLink="/admin/lookups">Lookups</a><p class="eyebrow">{{ isEdit ? 'EDIT LOOKUP' : 'NEW LOOKUP' }}</p>
-    <h1>{{ isEdit ? (lookup()?.nameEn || code) : 'Create lookup' }}</h1><p>{{ isEdit ? code + ' · ' + (lookup()?.values?.length || 0) + ' values' : 'Create the lookup first, then add its values on the edit screen.' }}</p></div>
-    <a class="admin-button secondary" routerLink="/admin/lookups">Back to list</a></header>
-  @if (error()) { <div class="admin-alert error">{{ error() }}</div> } @if (message()) { <div class="admin-alert success">{{ message() }}</div> }
-  @if (loading()) { <div class="admin-empty">Loading lookup…</div> } @else {
-    @if (isEdit) { <nav class="admin-tabs"><button type="button" [class.active]="tab() === 'details'" (click)="tab.set('details')">Details</button><button type="button" [class.active]="tab() === 'values'" (click)="tab.set('values')">Values <span>{{ lookup()?.values?.length || 0 }}</span></button></nav> }
-    @if (tab() === 'details') {
-      <form class="admin-panel admin-form" (ngSubmit)="saveLookup()"><div class="admin-panel-heading"><div><h2>Lookup details</h2><p>Names and availability for this reusable value list.</p></div></div>
-        <div class="admin-form-grid"><label><span>Code</span><input name="code" [(ngModel)]="form.code" [disabled]="isEdit" required placeholder="EVENT_CATEGORY"></label><span></span>
-          <label><span>English name</span><input name="nameEn" [(ngModel)]="form.nameEn" required></label><label><span>Arabic name</span><input name="nameAr" [(ngModel)]="form.nameAr" required dir="rtl"></label></div>
-        <div class="admin-check-row"><label><input type="checkbox" name="active" [(ngModel)]="form.active"> Active and available</label></div>
-        <footer class="admin-form-actions"><a class="admin-button secondary" routerLink="/admin/lookups">Cancel</a><button class="admin-button primary" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : (isEdit ? 'Save changes' : 'Create lookup') }}</button></footer>
-      </form>
-    }
-    @if (isEdit && tab() === 'values') {
-      <section class="admin-panel"><div class="admin-panel-heading"><div><h2>Lookup values</h2><p>Values are ordered by sort order, then code.</p></div><button class="admin-button primary" type="button" (click)="startNewValue()">Add value</button></div>
-        @if (!lookup()?.values?.length) { <div class="admin-empty compact"><h3>No values yet</h3><p>Add the first selectable value.</p></div> }
-        @else { <div class="admin-table-wrap flush"><table class="admin-table"><thead><tr><th>Value</th><th>Code</th><th>Order</th><th>Status</th><th></th></tr></thead><tbody>
-          @for (value of lookup()!.values; track value.id) { <tr><td><strong>{{ value.labelEn }}</strong><small>{{ value.labelAr }}</small></td><td><code>{{ value.code }}</code></td><td>{{ value.sortOrder }}</td>
-            <td><span class="admin-badge" [class.inactive]="!value.active">{{ value.active ? 'Active' : 'Inactive' }}</span></td><td class="admin-row-actions"><button class="admin-link-button" type="button" (click)="editValue(value)">Edit</button>@if (value.active) { <button class="admin-link-button danger" type="button" (click)="deactivateValue(value)">Deactivate</button> }</td></tr> }
-        </tbody></table></div> }
-      </section>
-      @if (valueEditorOpen()) { <form class="admin-panel admin-form admin-subeditor" (ngSubmit)="saveValue()">
-        <div class="admin-panel-heading"><div><p class="eyebrow">{{ editingValueId === null ? 'NEW VALUE' : 'EDIT VALUE' }}</p><h2>{{ editingValueId === null ? 'Value configuration' : valueForm.code }}</h2></div><button class="admin-close" type="button" (click)="closeValueEditor()">×</button></div>
-        <div class="admin-form-grid"><label><span>Code</span><input name="valueCode" [(ngModel)]="valueForm.code" [disabled]="editingValueId !== null" required></label><label><span>Sort order</span><input name="sortOrder" type="number" [(ngModel)]="valueForm.sortOrder" required></label>
-          <label><span>English label</span><input name="labelEn" [(ngModel)]="valueForm.labelEn" required></label><label><span>Arabic label</span><input name="labelAr" [(ngModel)]="valueForm.labelAr" required dir="rtl"></label></div>
-        <div class="admin-check-row"><label><input type="checkbox" name="valueActive" [(ngModel)]="valueForm.active"> Active</label></div>
-        <footer class="admin-form-actions"><button class="admin-button secondary" type="button" (click)="closeValueEditor()">Cancel</button><button class="admin-button primary" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : (editingValueId === null ? 'Add value' : 'Update value') }}</button></footer>
-      </form> }
-    }
-  }
-` })
+@Component({ selector: 'app-lookup-editor', imports: [FormsModule, RouterLink], templateUrl: './lookup-editor.component.html' })
 export class LookupEditorComponent {
   private readonly api = inject(PermitsApiService); private readonly route = inject(ActivatedRoute); private readonly router = inject(Router); private readonly destroyRef = inject(DestroyRef);
   readonly code = this.route.snapshot.paramMap.get('code') ?? ''; readonly isEdit = !!this.code;

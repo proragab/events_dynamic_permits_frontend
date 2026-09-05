@@ -13,9 +13,11 @@ import {
   PermitApplicationCreate,
   PermitField,
   PermitForm,
+  AdminPermitForm,
   PermitSearchHit,
   PermitSearchRequest,
   PermitType,
+  DefinitionPublication,
   ReconciliationReport,
   SchemaPlan,
   SchemaChange,
@@ -123,8 +125,8 @@ export class PermitsApiService {
   adminPermitTypes(): Observable<PermitType[]> {
     return this.http.get<PermitType[]>(`${this.base}/admin/catalog/types`);
   }
-  adminPermitDefinition(code: string): Observable<PermitForm> {
-    return this.http.get<PermitForm>(`${this.base}/admin/catalog/types/${code}`);
+  adminPermitDefinition(code: string): Observable<AdminPermitForm> {
+    return this.http.get<AdminPermitForm>(`${this.base}/admin/catalog/types/${code}`);
   }
   createLookup(request: Record<string, unknown>): Observable<Lookup> {
     return this.http.post<Lookup>(`${this.base}/admin/lookups`, request);
@@ -154,27 +156,45 @@ export class PermitsApiService {
   createPermitType(request: Record<string, unknown>): Observable<PermitType> {
     return this.http.post<PermitType>(`${this.base}/admin/catalog/types`, request);
   }
-  updatePermitType(code: string, request: Record<string, unknown>): Observable<PermitType> {
-    return this.http.put<PermitType>(`${this.base}/admin/catalog/types/${code}`, request);
+  updatePermitType(code: string, request: Record<string, unknown>, revision: number): Observable<PermitType> {
+    return this.http.put<PermitType>(`${this.base}/admin/catalog/types/${code}`, request, { headers: { 'If-Match': String(revision) } });
   }
-  addPermitField(code: string, request: Record<string, unknown>): Observable<PermitField> {
-    return this.http.post<PermitField>(`${this.base}/admin/catalog/types/${code}/fields`, request);
+  addPermitField(code: string, request: Record<string, unknown>, revision: number): Observable<PermitField> {
+    return this.http.post<PermitField>(`${this.base}/admin/catalog/types/${code}/fields`, request, { headers: { 'If-Match': String(revision) } });
   }
-  updatePermitField(
-    code: string,
-    fieldKey: string,
-    request: Record<string, unknown>,
-  ): Observable<PermitField> {
-    return this.http.put<PermitField>(
-      `${this.base}/admin/catalog/types/${code}/fields/${fieldKey}`,
-      request,
-    );
+  updatePermitField(code: string, fieldKey: string, request: Record<string, unknown>, revision: number): Observable<PermitField> {
+    return this.http.put<PermitField>(`${this.base}/admin/catalog/types/${code}/fields/${fieldKey}`, request,
+      { headers: { 'If-Match': String(revision) } });
   }
-  retirePermitField(code: string, fieldKey: string): Observable<PermitField> {
-    return this.http.post<PermitField>(
-      `${this.base}/admin/catalog/types/${code}/fields/${fieldKey}/retire`,
-      {},
-    );
+  retirePermitField(code: string, fieldKey: string, revision: number): Observable<PermitField> {
+    return this.http.post<PermitField>(`${this.base}/admin/catalog/types/${code}/fields/${fieldKey}/retire`, {},
+      { headers: { 'If-Match': String(revision) } });
+  }
+  restorePermitField(code: string, fieldKey: string, revision: number): Observable<PermitField> {
+    return this.http.post<PermitField>(`${this.base}/admin/catalog/types/${code}/fields/${fieldKey}/restore`, {},
+      { headers: { 'If-Match': String(revision) } });
+  }
+  publications(code: string): Observable<DefinitionPublication[]> {
+    return this.http.get<DefinitionPublication[]>(`${this.base}/admin/catalog/types/${code}/publications`);
+  }
+  definitionPublications(): Observable<DefinitionPublication[]> {
+    return this.http.get<DefinitionPublication[]>(`${this.base}/admin/catalog/publications`);
+  }
+  validatePublication(code: string, p: DefinitionPublication): Observable<DefinitionPublication> {
+    return this.http.post<DefinitionPublication>(`${this.base}/admin/catalog/types/${code}/publications/validate`, {
+      publicationId: p.publicationId, expectedVersion: p.version, definitionFingerprint: p.definitionFingerprint, planFingerprint: p.planFingerprint,
+    });
+  }
+  rejectPublication(code: string, p: DefinitionPublication, reason: string): Observable<DefinitionPublication> {
+    return this.http.post<DefinitionPublication>(`${this.base}/admin/catalog/types/${code}/publications/reject`, {
+      publication: { publicationId: p.publicationId, expectedVersion: p.version, definitionFingerprint: p.definitionFingerprint, planFingerprint: p.planFingerprint }, reason,
+    });
+  }
+  publication(code: string, id: number): Observable<DefinitionPublication> {
+    return this.http.get<DefinitionPublication>(`${this.base}/admin/catalog/types/${code}/publications/${id}`);
+  }
+  publishDefinition(code: string, expectedDraftRev: number, mode: 'REVIEW' | 'AUTO'): Observable<DefinitionPublication> {
+    return this.http.post<DefinitionPublication>(`${this.base}/admin/catalog/types/${code}/publish`, { expectedDraftRev, mode });
   }
   schemaPlan(code: string): Observable<SchemaPlan> {
     return this.http.get<SchemaPlan>(`${this.base}/admin/schema/types/${code}/plan`);
@@ -182,15 +202,10 @@ export class PermitsApiService {
   schemaChanges(code: string): Observable<SchemaChange[]> {
     return this.http.get<SchemaChange[]>(`${this.base}/admin/schema/types/${code}/changes`);
   }
-  syncSchema(code: string, mode: 'REVIEW' | 'AUTO'): Observable<unknown> {
-    return this.http.post(`${this.base}/admin/schema/types/${code}/sync`, {
-      mode,
-      actor: 'admin-console',
-    });
-  }
-  approveSchema(code: string): Observable<unknown> {
-    return this.http.post(`${this.base}/admin/schema/types/${code}/approve`, {
-      actor: 'admin-console',
+  applyPublication(code: string, publication: DefinitionPublication, approve: boolean): Observable<DefinitionPublication> {
+    return this.http.post<DefinitionPublication>(`${this.base}/admin/schema/types/${code}/${approve ? 'approve' : 'sync'}`, {
+      publicationId: publication.publicationId, expectedVersion: publication.version,
+      definitionFingerprint: publication.definitionFingerprint, planFingerprint: publication.planFingerprint,
     });
   }
   workflows(): Observable<WorkflowDefinition[]> {

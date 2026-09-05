@@ -93,6 +93,26 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'permit-types/:code/review/:publicationId',
+        redirectTo: 'definition-reviews/:code/:publicationId',
+      },
+      {
+        path: 'definition-reviews',
+        loadComponent: () => import('./features/admin/permit-types/definition-publications.component').then(m => m.DefinitionPublicationsComponent),
+      },
+      {
+        path: 'definition-versions',
+        data: { view: 'versions' },
+        loadComponent: () => import('./features/admin/permit-types/definition-publications.component').then(m => m.DefinitionPublicationsComponent),
+      },
+      {
+        path: 'definition-reviews/:code/:publicationId',
+        loadComponent: () =>
+          import('./features/admin/permit-types/permit-type-review.component').then(
+            (module) => module.PermitTypeReviewComponent,
+          ),
+      },
+      {
         path: 'lookups',
         loadComponent: () =>
           import('./features/admin/lookups/lookup-list.component').then(

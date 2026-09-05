@@ -1,0 +1,99 @@
+
+    <header class="admin-page-header">
+      <div><a class="admin-breadcrumb" routerLink="/admin/permit-types">{{ locale.text('Permit types', 'أنواع التصاريح') }}</a>
+        <p class="eyebrow">{{ locale.text('EDIT DRAFT', 'تعديل المسودة') }}</p>
+        <h1>{{ isEdit ? (currentType()?.nameEn || code) : locale.text('Create permit type', 'إنشاء نوع تصريح') }}</h1>
+        <p>{{ locale.text('Save your edits as a draft. Submit when ready; validation and decisions happen in Definition reviews.', 'احفظ تعديلاتك كمسودة. أرسلها عند الجاهزية؛ يتم التحقق واتخاذ القرار في مراجعة التعريفات.') }}</p>
+      </div>
+      @if (isEdit) { <button class="admin-button primary" type="button" (click)="saveDefinition(true)" [disabled]="loading() || saving() || fieldEditorOpen()">{{ saving() ? locale.text('Saving…', 'جارٍ الحفظ…') : locale.text('Submit for review', 'إرسال للمراجعة') }}</button> }
+    </header>
+    @if (isEdit && !loading()) {
+      <div class="draft-notice" role="status">
+        <a routerLink="/admin/definition-versions" [queryParams]="{ type: code }">{{ locale.text('View all versions', 'عرض جميع الإصدارات') }}</a>
+        <span class="admin-badge pending">{{ locale.text('Draft', 'مسودة') }}</span>
+        <span>{{ activeRevision() === null ? locale.text('Not published yet', 'لم يُنشر بعد') : locale.text('Published version v', 'الإصدار المنشور v') + activeRevision() }}</span>
+        @if (fieldEditorOpen()) { <span>{{ locale.text('Finish editing the field to continue to review.', 'أكمل تعديل الحقل للمتابعة إلى المراجعة.') }}</span> }
+      </div>
+    }
+    @if (error()) { <div class="admin-alert error">{{ error() }}</div> }
+    @if (message()) { <div class="admin-alert success">{{ message() }}</div> }
+    @if (loading()) { <div class="admin-empty">Loading permit definition…</div> }
+    @else {
+      @if (isEdit) {
+        <nav class="admin-tabs" aria-label="Permit type editor">
+          <button type="button" [class.active]="tab() === 'details'" (click)="tab.set('details')">Details</button>
+          <button type="button" [class.active]="tab() === 'fields'" (click)="tab.set('fields')">Fields <span>{{ fields().length }}</span></button>
+        </nav>
+      }
+
+      @if (tab() === 'details') {
+        <form class="admin-panel admin-form" (ngSubmit)="saveDefinition(false)">
+          <div class="admin-panel-heading"><div><h2>Permit details</h2><p>Basic identity and workflow assignment.</p></div></div>
+          <div class="admin-form-grid">
+            <label><span>Code</span><input name="code" [(ngModel)]="form.code" [disabled]="isEdit" required placeholder="EVENT_PERMIT"></label>
+            <label><span>Category</span><input name="category" [(ngModel)]="form.category" placeholder="EVENTS"></label>
+            <label><span>English name</span><input name="nameEn" [(ngModel)]="form.nameEn" required></label>
+            <label><span>Arabic name</span><input name="nameAr" [(ngModel)]="form.nameAr" required dir="rtl"></label>
+            <label class="wide"><span>Workflow</span><select name="workflowCode" [(ngModel)]="form.workflowCode"><option value="">No workflow assigned</option>
+              @for (workflow of workflows(); track workflow.code) { <option [value]="workflow.code">{{ workflow.nameEn }} ({{ workflow.code }})</option> }
+            </select><small>Choose the process that handles applications of this type.</small></label>
+          </div>
+          <footer class="admin-form-actions"><a class="admin-button secondary" routerLink="/admin/permit-types">{{ locale.text('Back to list', 'العودة للقائمة') }}</a><button class="admin-button primary" type="submit" [disabled]="saving() || fieldEditorOpen()">{{ saving() ? locale.text('Saving…', 'جارٍ الحفظ…') : isEdit ? locale.text('Save draft', 'حفظ المسودة') : locale.text('Create draft and add fields', 'إنشاء المسودة وإضافة الحقول') }}</button></footer>
+        </form>
+      }
+
+      @if (isEdit && tab() === 'fields') {
+        <section class="admin-panel">
+          <div class="admin-panel-heading"><div><h2>{{ locale.text('Fields', 'الحقول') }}</h2><p>{{ locale.text('Add or edit fields in this draft. Submit for review when you are ready.', 'أضف الحقول أو عدّلها في هذه المسودة. أرسلها للمراجعة عندما تصبح جاهزًا.') }}</p></div>
+            <button class="admin-button primary" type="button" (click)="startNewField()" [disabled]="saving() || fieldEditorOpen()">Add field</button></div>
+          @if (!fields().length) { <div class="admin-empty compact"><h3>No fields yet</h3><p>Add the first field for this permit form.</p></div> }
+          @else { <div class="admin-table-wrap flush"><table class="admin-table"><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Order</th><th>{{ locale.text('Draft change', 'تغيير المسودة') }}</th><th></th></tr></thead>
+            <tbody>@for (field of fields(); track field.fieldKey) { <tr><td><strong>{{ field.labelEn }}</strong><small><code>{{ field.fieldKey }}</code> · {{ field.labelAr }}</small></td>
+              <td>{{ field.dataType }}@if (field.lookupCode) { <small>{{ field.lookupCode }}</small> }</td><td>{{ field.required ? 'Yes' : 'No' }}</td><td>{{ field.sortOrder }}</td>
+              <td><span class="admin-badge" [class.pending]="draftChanged(field)">{{ draftStatus(field) }}</span></td>
+
+              <td class="admin-row-actions">@if (field.syncState !== 'RETIRED') { <button class="admin-link-button" type="button" (click)="editField(field)" [disabled]="saving() || fieldEditorOpen()">Edit</button><button class="admin-link-button danger" type="button" (click)="retireField(field)" [disabled]="saving() || fieldEditorOpen()">{{ locale.text('Remove', 'إزالة') }}</button> } @else { <button class="admin-link-button" type="button" (click)="restoreField(field)" [disabled]="saving() || fieldEditorOpen()">{{ locale.text('Undo removal', 'تراجع عن الإزالة') }}</button> }</td></tr> }</tbody></table></div> }
+        </section>
+
+        @if (fieldEditorOpen()) {
+          <form class="admin-panel admin-form admin-subeditor" (ngSubmit)="saveField()">
+            <div class="admin-panel-heading"><div><p class="eyebrow">{{ editingFieldKey ? 'EDIT FIELD' : 'NEW FIELD' }}</p><h2>{{ editingFieldKey || 'Field configuration' }}</h2></div><button class="admin-close" type="button" (click)="closeFieldEditor()" [disabled]="saving()" aria-label="Close">×</button></div>
+            <div class="admin-form-grid three">
+              <label><span>Field key</span><input name="fieldKey" [(ngModel)]="fieldForm.fieldKey" [disabled]="!!editingFieldKey" required placeholder="venue_capacity"></label>
+              <label><span>Data type</span><select name="dataType" [(ngModel)]="fieldForm.dataType">@for (type of dataTypes; track type) { <option [value]="type">{{ type }}</option> }</select></label>
+              <label><span>Sort order</span><input name="sortOrder" type="number" [(ngModel)]="fieldForm.sortOrder" required></label>
+              <label><span>English label</span><input name="labelEn" [(ngModel)]="fieldForm.labelEn" required></label>
+              <label><span>Arabic label</span><input name="labelAr" [(ngModel)]="fieldForm.labelAr" required dir="rtl"></label>
+              <label><span>Section</span><input name="sectionCode" [(ngModel)]="fieldForm.sectionCode" placeholder="DETAILS"></label>
+              @if (fieldForm.dataType === 'TEXT') { <label><span>Maximum length</span><input name="length" type="number" [(ngModel)]="fieldForm.length"></label> }
+              @if (fieldForm.dataType === 'DECIMAL' || fieldForm.dataType === 'MONEY') {
+                <label><span>Precision</span><input name="precision" type="number" [(ngModel)]="fieldForm.precision"></label>
+                <label><span>Scale</span><input name="scale" type="number" [(ngModel)]="fieldForm.scale"></label>
+              }
+              @if (fieldForm.dataType === 'LOOKUP' || fieldForm.dataType === 'MULTISELECT') {
+                <label><span>Lookup</span><select name="lookupCode" [(ngModel)]="fieldForm.lookupCode" required><option value="">Select lookup</option>@for (lookup of lookups(); track lookup.code) { <option [value]="lookup.code">{{ lookup.nameEn }}</option> }</select></label>
+              }
+              <label><span>Default value</span><input name="defaultValue" [(ngModel)]="fieldForm.defaultValue"></label>
+              <label><span>Required when</span><input name="requiredWhen" [(ngModel)]="fieldForm.requiredWhen" placeholder="Optional rule code"></label>
+              <label><span>Minimum</span><input name="ruleMin" type="number" [(ngModel)]="fieldForm.ruleMin"></label>
+              <label><span>Maximum</span><input name="ruleMax" type="number" [(ngModel)]="fieldForm.ruleMax"></label>
+              <label><span>Validation pattern</span><input name="rulePattern" [(ngModel)]="fieldForm.rulePattern"></label>
+              <label class="wide"><span>English help</span><textarea name="helpEn" [(ngModel)]="fieldForm.helpEn" rows="2"></textarea></label>
+              <label class="wide"><span>Arabic help</span><textarea name="helpAr" [(ngModel)]="fieldForm.helpAr" rows="2" dir="rtl"></textarea></label>
+            </div>
+            <div class="admin-check-row"><label><input type="checkbox" name="required" [(ngModel)]="fieldForm.required"> Required field</label></div>
+            <footer class="admin-form-actions"><button class="admin-button secondary" type="button" (click)="closeFieldEditor()" [disabled]="saving()">Cancel</button><button class="admin-button primary" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : locale.text('Keep in draft', 'حفظ في المسودة') }}</button></footer>
+          </form>
+        }
+      }
+
+      @if (isEdit && tab() === 'details') {
+        <details class="admin-panel service-settings">
+          <summary>{{ locale.text('Service settings', 'إعدادات الخدمة') }}</summary>
+          <p>{{ locale.text('Availability and default selection apply immediately and are separate from definition review.', 'تُطبّق إتاحة الخدمة واختيار النوع الافتراضي فورًا، وهما منفصلان عن مراجعة التعريف.') }}</p>
+          <div class="admin-check-row"><label><input type="checkbox" [(ngModel)]="form.isDefault"> {{ locale.text('Default permit type', 'نوع التصريح الافتراضي') }}</label>
+            <label><input type="checkbox" [(ngModel)]="form.active"> {{ locale.text('Service enabled', 'الخدمة مفعلة') }}</label></div>
+          <button class="admin-button secondary" type="button" (click)="saveSettings()" [disabled]="saving()">{{ locale.text('Apply service settings', 'تطبيق إعدادات الخدمة') }}</button>
+        </details>
+      }
+    }

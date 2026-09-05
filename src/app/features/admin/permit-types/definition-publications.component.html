@@ -1,0 +1,29 @@
+
+    <header class="admin-page-header">
+      <div><p class="eyebrow">{{ locale.text('DEFINITION MANAGEMENT', 'إدارة التعريفات') }}</p>
+        <h1>{{ versions() ? locale.text('Versions', 'الإصدارات') : locale.text('Definition reviews', 'مراجعة التعريفات') }}</h1>
+        <p>{{ versions() ? locale.text('Every submission is a frozen version. Published, pending and rejected versions stay here.', 'كل إرسال يمثل إصدارًا مجمدًا. تبقى الإصدارات المنشورة والمعلقة والمرفوضة هنا.') : locale.text('Open a submitted version to review its changes, validate it, then approve or reject.', 'افتح إصدارًا مرسلًا لمراجعة تغييراته والتحقق منه، ثم الموافقة أو الرفض.') }}</p>
+      </div>
+      <button class="admin-button secondary" type="button" (click)="load()" [disabled]="loading()">{{ locale.text('Refresh', 'تحديث') }}</button>
+    </header>
+    <div class="filters">
+      <label>{{ locale.text('Permit type', 'نوع التصريح') }}<select [(ngModel)]="typeFilter"><option value="">{{ locale.text('All types', 'جميع الأنواع') }}</option>@for (type of types(); track type.code) { <option [value]="type.code">{{ type.nameEn }}</option> }</select></label>
+      <label>{{ locale.text('Status', 'الحالة') }}<select [(ngModel)]="stateFilter"><option value="">{{ locale.text('All statuses', 'جميع الحالات') }}</option><option value="SCHEMA_PENDING">{{ locale.text('Pending review', 'بانتظار المراجعة') }}</option><option value="ACTIVE">{{ locale.text('Published', 'منشور') }}</option><option value="REJECTED">{{ locale.text('Rejected', 'مرفوض') }}</option></select></label>
+    </div>
+    @if (error()) { <div class="admin-alert error" role="alert">{{ error() }}</div> }
+    @if (loading()) { <div class="admin-empty">{{ locale.text('Loading versions…', 'جارٍ تحميل الإصدارات…') }}</div> }
+    @else if (!filtered().length) {
+      <div class="admin-empty"><h2>{{ locale.text('No versions to show', 'لا توجد إصدارات للعرض') }}</h2><p>{{ locale.text('Save a draft in Permit Types, then Submit for review. Saving alone does not create a version.', 'احفظ مسودة في أنواع التصاريح، ثم أرسلها للمراجعة. الحفظ وحده لا ينشئ إصدارًا.') }}</p><a class="admin-button secondary" routerLink="/admin/permit-types">{{ locale.text('Go to permit types', 'الانتقال إلى أنواع التصاريح') }}</a></div>
+    } @else {
+      <div class="admin-table-wrap"><table class="admin-table">
+        <thead><tr><th>{{ locale.text('Permit type', 'نوع التصريح') }}</th><th>{{ locale.text('Version', 'الإصدار') }}</th><th>{{ locale.text('Status', 'الحالة') }}</th><th>{{ locale.text('Submitted', 'تم الإرسال') }}</th><th>{{ locale.text('Decision', 'القرار') }}</th><th></th></tr></thead>
+        <tbody>@for (p of filtered(); track p.publicationId) {
+          <tr><td><strong>{{ p.definition.type.nameEn }}</strong><small>{{ p.permitTypeCode }}</small></td>
+            <td><span class="version">v{{ p.definitionRev }}</span><small>{{ p.baseActiveDefinitionRev === null ? locale.text('First version', 'الإصدار الأول') : locale.text('Based on v', 'مبني على الإصدار ') + p.baseActiveDefinitionRev }}</small></td>
+            <td><span class="admin-badge" [class.pending]="p.publicationState === 'SCHEMA_PENDING'" [class.failed]="p.publicationState === 'REJECTED'">{{ status(p) }}</span>@if (p.publicationState === 'SCHEMA_PENDING') { <small>{{ p.validationStatus === 'PASSED' ? locale.text('Validation passed', 'نجح التحقق') : p.validationStatus === 'FAILED' ? locale.text('Validation failed', 'فشل التحقق') : locale.text('Not validated', 'لم يتم التحقق') }}</small> }</td>
+            <td>{{ p.createdAt | date:'medium' }}<small>{{ p.createdBy }}</small></td>
+            <td>@if (p.rejectedAt) { {{ p.rejectedBy }}<small>{{ p.rejectionReason }}</small> } @else if (p.activatedAt) { {{ p.approvedBy }}<small>{{ p.activatedAt | date:'medium' }}</small> } @else { — }</td>
+            <td><a class="admin-link" [routerLink]="['/admin/definition-reviews', p.permitTypeCode, p.publicationId]">{{ p.publicationState === 'SCHEMA_PENDING' ? locale.text('Review', 'مراجعة') : locale.text('View version', 'عرض الإصدار') }}</a></td></tr>
+        }</tbody>
+      </table></div>
+    }

@@ -9,60 +9,7 @@ import { adminErrorMessage } from '../admin-error';
 
 type WorkflowTab = 'details' | 'steps' | 'reconciliation';
 
-@Component({ selector: 'app-workflow-editor', imports: [FormsModule, RouterLink], template: `
-  <header class="admin-page-header"><div><a class="admin-breadcrumb" routerLink="/admin/workflows">Workflows</a><p class="eyebrow">{{ isEdit ? 'EDIT WORKFLOW' : 'NEW WORKFLOW' }}</p>
-    <h1>{{ isEdit ? (workflow()?.nameEn || code) : 'Create workflow' }}</h1><p>{{ isEdit ? code + ' · Definition revision ' + (workflow()?.definitionRev || 0) : 'Create the workflow as a draft, then add and assign its steps.' }}</p></div>
-    <a class="admin-button secondary" routerLink="/admin/workflows">Back to list</a></header>
-  @if (error()) { <div class="admin-alert error">{{ error() }}</div> } @if (message()) { <div class="admin-alert success">{{ message() }}</div> }
-  @if (loading()) { <div class="admin-empty">Loading workflow…</div> } @else {
-    @if (isEdit) { <nav class="admin-tabs"><button type="button" [class.active]="tab() === 'details'" (click)="tab.set('details')">Details</button>
-      <button type="button" [class.active]="tab() === 'steps'" (click)="tab.set('steps')">Steps <span>{{ workflow()?.steps?.length || 0 }}</span></button>
-      <button type="button" [class.active]="tab() === 'reconciliation'" (click)="tab.set('reconciliation')">Reconciliation</button></nav> }
-    @if (tab() === 'details') {
-      <form class="admin-panel admin-form" (ngSubmit)="saveWorkflow()"><div class="admin-panel-heading"><div><h2>Workflow details</h2><p>Identity, subject, and activation state.</p></div>@if (isEdit) { <span class="admin-badge" [class.inactive]="!form.active">{{ form.active ? 'Active' : 'Draft' }}</span> }</div>
-        <div class="admin-form-grid"><label><span>Code</span><input name="code" [(ngModel)]="form.code" [disabled]="isEdit" required placeholder="EVENT_APPROVAL"></label>
-          <label><span>Subject type</span><select name="subjectType" [(ngModel)]="form.subjectType" [disabled]="isEdit"><option value="EVENT">Event</option><option value="PERMIT">Permit</option></select></label>
-          <label><span>Subject code</span><input name="subjectCode" [(ngModel)]="form.subjectCode" [disabled]="isEdit" required placeholder="EVENT or permit type code"><small>Which event or permit definition uses this workflow.</small></label>
-          <label><span>Applicant return mode</span><select name="applicantReturnMode" [(ngModel)]="form.applicantReturnMode"><option value="RESUME">Resume from returned step</option><option value="RESTART">Restart workflow</option></select></label>
-          <label><span>English name</span><input name="nameEn" [(ngModel)]="form.nameEn" required></label><label><span>Arabic name</span><input name="nameAr" [(ngModel)]="form.nameAr" required dir="rtl"></label></div>
-        <div class="admin-check-row"><label><input type="checkbox" name="active" [(ngModel)]="form.active"> Active <small>(activation validates all steps)</small></label></div>
-        <footer class="admin-form-actions"><a class="admin-button secondary" routerLink="/admin/workflows">Cancel</a><button class="admin-button primary" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : (isEdit ? 'Save and validate' : 'Create workflow') }}</button></footer>
-      </form>
-    }
-    @if (isEdit && tab() === 'steps') {
-      <section class="admin-panel"><div class="admin-panel-heading"><div><h2>Workflow steps</h2><p>Human steps must be assigned to one specific platform role.</p></div><button class="admin-button primary" type="button" (click)="startNewStep()">Add step</button></div>
-        @if (!workflow()?.steps?.length) { <div class="admin-empty compact"><h3>No steps yet</h3><p>Add an applicant form step first, then review and system steps.</p></div> }
-        @else { <div class="admin-step-list">@for (step of sortedSteps(); track step.stepCode) { <article>
-          <span class="admin-step-sequence">{{ step.sequence }}</span><div class="admin-step-copy"><div><strong>{{ step.titleEn }}</strong><span class="admin-badge">{{ step.kind }}</span>@if (step.applicantStep) { <span class="admin-badge pending">Applicant</span> }</div><p><code>{{ step.stepCode }}</code> · {{ step.titleAr }}</p></div>
-          <div class="admin-step-assignee"><small>{{ isHuman(step.kind) ? 'Assigned role' : 'System handler' }}</small><strong>{{ step.roleCode || step.adapterCode || step.conditionCode || 'Automatic' }}</strong></div>
-          <div class="admin-row-actions"><button class="admin-link-button" type="button" (click)="editStep(step)">Edit</button><button class="admin-link-button danger" type="button" (click)="retireStep(step)">Retire</button></div>
-        </article> }</div> }
-      </section>
-      @if (stepEditorOpen()) { <form class="admin-panel admin-form admin-subeditor" (ngSubmit)="saveStep()">
-        <div class="admin-panel-heading"><div><p class="eyebrow">{{ editingStepCode ? 'EDIT STEP' : 'NEW STEP' }}</p><h2>{{ editingStepCode || 'Step configuration' }}</h2></div><button class="admin-close" type="button" (click)="closeStepEditor()">×</button></div>
-        <div class="admin-form-grid three"><label><span>Step code</span><input name="stepCode" [(ngModel)]="stepForm.stepCode" [disabled]="!!editingStepCode" required placeholder="TECHNICAL_REVIEW"></label>
-          <label><span>Sequence</span><input name="sequence" type="number" min="1" [(ngModel)]="stepForm.sequence" required></label>
-          <label><span>Step kind</span><select name="kind" [(ngModel)]="stepForm.kind"><option value="FORM">Applicant form</option><option value="REVIEW">Human review</option><option value="GATE">Conditional gate</option><option value="EXTERNAL">External integration</option><option value="PAYMENT">Payment</option><option value="NOTIFY">Notification</option></select></label>
-          <label><span>English title</span><input name="titleEn" [(ngModel)]="stepForm.titleEn" required></label><label><span>Arabic title</span><input name="titleAr" [(ngModel)]="stepForm.titleAr" required dir="rtl"></label>
-          <label><span>SLA (days)</span><input name="slaDays" type="number" min="1" [(ngModel)]="stepForm.slaDays"></label>
-          @if (isHuman(stepForm.kind)) { <label class="wide"><span>Assigned role</span><select name="roleCode" [(ngModel)]="stepForm.roleCode" required><option value="">Select the responsible role</option>@for (role of roles(); track role) { <option [value]="role">{{ role }}</option> }</select><small>This role receives and performs the task. User names are not configured here.</small></label> }
-          @if (supportsExternalCheck(stepForm.kind)) { <label class="wide"><span>{{ stepForm.kind === 'REVIEW' ? 'External check (optional)' : 'Registered adapter' }}</span><select name="adapterCode" [(ngModel)]="stepForm.adapterCode" [required]="isAdapter(stepForm.kind)"><option value="">{{ stepForm.kind === 'REVIEW' ? 'No external check' : 'Select adapter' }}</option>@for (adapter of adapters(); track adapter) { <option [value]="adapter">{{ adapter }}</option> }</select>@if (stepForm.kind === 'REVIEW') { <small>The reviewer runs this check and waits for an immediate result or callback before deciding.</small> }</label> }
-          @if (stepForm.kind === 'GATE' || conditions().length) { <label class="wide"><span>Condition</span><select name="conditionCode" [(ngModel)]="stepForm.conditionCode" [required]="stepForm.kind === 'GATE'"><option value="">No condition</option>@for (condition of conditions(); track condition) { <option [value]="condition">{{ condition }}</option> }</select></label> }
-          <label class="wide"><span>Return target</span><select name="returnTargetStep" [(ngModel)]="stepForm.returnTargetStep"><option value="">Default previous step</option>@for (step of earlierSteps(); track step.stepCode) { <option [value]="step.stepCode">{{ step.titleEn }} ({{ step.stepCode }})</option> }</select></label>
-        </div>
-        <div class="admin-check-row wrap"><label><input type="checkbox" name="applicantStep" [(ngModel)]="stepForm.applicantStep"> Applicant step</label><label><input type="checkbox" name="allowReturnPrevious" [(ngModel)]="stepForm.allowReturnPrevious"> Allow return to previous</label><label><input type="checkbox" name="allowReturnApplicant" [(ngModel)]="stepForm.allowReturnApplicant"> Allow return to applicant</label><label><input type="checkbox" name="allowReject" [(ngModel)]="stepForm.allowReject"> Allow rejection</label></div>
-        <footer class="admin-form-actions"><button class="admin-button secondary" type="button" (click)="closeStepEditor()">Cancel</button><button class="admin-button primary" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : (editingStepCode ? 'Update step' : 'Add step') }}</button></footer>
-      </form> }
-    }
-    @if (isEdit && tab() === 'reconciliation') {
-      <section class="admin-panel"><div class="admin-panel-heading"><div><h2>Running-work reconciliation</h2><p>Preview how this workflow definition affects existing in-progress subjects.</p></div><button class="admin-button secondary" type="button" (click)="loadImpact()" [disabled]="saving()">Preview impact</button></div>
-        @if (!impact()) { <div class="admin-empty compact"><h3>No preview loaded</h3><p>Preview before applying changes to running work.</p></div> }
-        @else { <div class="admin-summary-row"><span><strong>{{ impact()!.subjectsTouched }}</strong> subjects</span><span><strong>{{ impact()!.tasksAdded }}</strong> tasks added</span><span><strong>{{ impact()!.tasksUpdated }}</strong> updated</span><span><strong>{{ impact()!.tasksObsoleted }}</strong> obsolete</span><span><strong>{{ impact()!.tasksBlockedForManualReview }}</strong> manual review</span></div>
-          <footer class="admin-form-actions"><button class="admin-button primary" type="button" (click)="applyReconcile()" [disabled]="saving()">Apply reconciliation</button></footer> }
-      </section>
-    }
-  }
-` })
+@Component({ selector: 'app-workflow-editor', imports: [FormsModule, RouterLink], templateUrl: './workflow-editor.component.html' })
 export class WorkflowEditorComponent {
   private readonly api = inject(PermitsApiService); private readonly route = inject(ActivatedRoute); private readonly router = inject(Router); private readonly destroyRef = inject(DestroyRef);
   readonly code = this.route.snapshot.paramMap.get('code') ?? ''; readonly isEdit = !!this.code;

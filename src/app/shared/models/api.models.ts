@@ -39,6 +39,7 @@ export interface PermitField {
 }
 
 export interface PermitForm { type: PermitType; fields: PermitField[]; }
+export interface AdminPermitForm extends PermitForm { activeFields: PermitField[]; }
 export interface LookupValue { id: number; code: string; labelEn: string; labelAr: string; sortOrder: number; active: boolean; }
 export interface Lookup { code: string; nameEn: string; nameAr: string; active: boolean; values: LookupValue[]; }
 export interface FileAnswer { fileRef: string; fileName: string; mimeType: string; sizeBytes: number; status?: string; uploadedBy?: string; }
@@ -106,3 +107,17 @@ export interface WorkflowDefinition { code: string; subjectType: 'EVENT' | 'PERM
 export interface ReconciliationReport { tasksAdded: number; tasksUpdated: number; tasksObsoleted: number; tasksBlockedForManualReview: number; subjectsTouched: number; }
 
 export interface ApiProblem { type: string; title: string; status: number; detail: string; errors: { field: string; code: string; message: string }[]; traceId: string; }
+
+export interface DefinitionPublication {
+  definition: PermitForm; baseDefinition: PermitForm | null;
+  publicationId: number; permitTypeCode: string; definitionRev: number; draftRev: number;
+  baseActiveDefinitionRev: number | null; activeDefinitionRev: number | null;
+  publicationState: 'SCHEMA_PENDING' | 'ACTIVE' | 'REJECTED'; definitionFingerprint: string; planFingerprint: string;
+  mode: 'AUTO' | 'REVIEW'; baseline: boolean; approvalRequired: boolean; approvedBy: string | null;
+  version: number; plan: SchemaPlan; remainingPlan: SchemaPlan | null; changeIds: number[]; verifiedAt: string | null; activatedAt: string | null;
+  verificationEvidence: string | null; lastAttemptStatus: string; lastError: string | null;
+  failedOperation: string | null; nextAction: 'NONE' | 'EDIT_DRAFT' | 'REVIEW' | 'APPLY' | 'RETRY';
+  createdBy: string; createdAt: string;
+  validationStatus: 'NOT_RUN' | 'PASSED' | 'FAILED'; validatedAt: string | null; validatedBy: string | null; validationMessage: string | null;
+  rejectedAt: string | null; rejectedBy: string | null; rejectionReason: string | null;
+}

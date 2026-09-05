@@ -1,0 +1,106 @@
+
+    <header class="admin-page-header">
+      <div><a class="admin-breadcrumb" routerLink="/admin/permit-types">{{ locale.text('Permit types', 'أنواع التصاريح') }}</a>
+        <p class="eyebrow">{{ locale.text('DEFINITION REVIEW', 'مراجعة التعريف') }}</p>
+        <h1>{{ locale.text('Version ', 'الإصدار ') }}{{ publication() ? 'v' + publication()!.definitionRev : '' }}</h1>
+        <p>{{ publication()?.definition?.type?.nameEn || code }}</p>
+      </div>
+      <button class="admin-button secondary" type="button" (click)="load()" [disabled]="busy() || loading()">{{ locale.text('Refresh', 'تحديث') }}</button>
+    </header>
+    <nav class="review-step">
+      <a routerLink="/admin/definition-reviews">{{ locale.text('Back to reviews', 'العودة للمراجعات') }}</a><span aria-hidden="true">·</span>
+      <a routerLink="/admin/definition-versions" [queryParams]="{ type: code }">{{ locale.text('All versions', 'جميع الإصدارات') }}</a>
+    </nav>
+    @if (error()) { <div class="admin-alert error" role="alert">{{ error() }}</div> }
+    @if (loading()) { <div class="admin-empty">{{ locale.text('Loading your saved changes…', 'جارٍ تحميل التغييرات المحفوظة…') }}</div> }
+    @else if (publication(); as p) {
+      @if (p.publicationState === 'ACTIVE') {
+        <section class="admin-panel review-success" role="status">
+          <h2>{{ isCurrent() ? locale.text('Changes published', 'تم نشر التغييرات') : locale.text('Previously published', 'منشور سابقًا') }}</h2>
+          <p>{{ locale.text('Published version ', 'الإصدار المنشور ') }}{{ p.definitionRev }} · {{ p.activatedAt | date:'medium' }}</p>
+          <p>{{ isCurrent() ? locale.text('Users now see this approved definition.', 'يرى المستخدمون الآن هذا التعريف المعتمد.') : locale.text('A newer published version is currently in use.', 'يُستخدم الآن إصدار منشور أحدث.') }}</p>
+          <a class="admin-button primary" routerLink="/admin/permit-types">{{ locale.text('Done', 'تم') }}</a>
+        </section>
+      } @else if (p.publicationState === 'REJECTED') {
+        <section class="admin-panel review-intro">
+          <span class="admin-badge failed">{{ locale.text('Rejected', 'مرفوض') }}</span>
+          <p>{{ p.rejectionReason }}</p><p>{{ p.rejectedBy }} · {{ p.rejectedAt | date:'medium' }}</p>
+          <p>{{ locale.text('This version is closed. Its content and rejection remain in history. Edit the draft and submit a new version to continue.', 'هذا الإصدار مغلق. يبقى محتواه وسبب رفضه في السجل. عدّل المسودة وأرسل إصدارًا جديدًا للمتابعة.') }}</p>
+          <a class="admin-button secondary" [routerLink]="['/admin/permit-types', code, 'edit']">{{ locale.text('Edit draft', 'تعديل المسودة') }}</a>
+        </section>
+      } @else {
+        <section class="admin-panel review-intro">
+          <span class="admin-badge pending">{{ locale.text('Awaiting approval', 'بانتظار الموافقة') }}</span>
+          <p>{{ p.activeDefinitionRev === null ? locale.text('This type is not published yet.', 'لم يُنشر هذا النوع بعد.') : locale.text('Users still see published version ', 'لا يزال المستخدمون يرون الإصدار المنشور ') + p.activeDefinitionRev }}</p>
+          <p>{{ locale.text('Review the changes, run validation, then approve or reject this version.', 'راجع التغييرات، ثم شغّل التحقق ووافق على هذا الإصدار أو ارفضه.') }}</p>
+        </section>
+        @if (blockReason()) { <div class="admin-alert error" role="alert">{{ blockReason() }}</div> }
+        @if (p.lastError && !error()) { <div class="admin-alert error"><strong>{{ locale.text('Publication did not complete', 'لم يكتمل النشر') }}</strong><p>{{ p.lastError }}</p></div> }
+      }
+      <section class="admin-panel review-intro">
+        <p>{{ locale.text('Submitted by', 'أرسله') }} {{ p.createdBy }} · {{ p.createdAt | date:'medium' }}</p>
+        <p>{{ locale.text('Compared with', 'مقارنة مع') }} {{ p.baseActiveDefinitionRev === null ? locale.text('No previous version', 'لا يوجد إصدار سابق') : 'v' + p.baseActiveDefinitionRev }}</p>
+        @if (p.publicationState === 'SCHEMA_PENDING' && draft()?.type?.catalogRev !== p.draftRev) { <p>{{ locale.text('The draft has later edits. This review includes only the frozen content shown below.', 'تحتوي المسودة على تعديلات لاحقة. تشمل هذه المراجعة المحتوى المجمد المعروض أدناه فقط.') }}</p> }
+      </section>
+      <div class="change-list">
+        @for (change of changes(); track change.key) {
+          <section class="admin-panel">
+            <div class="change-heading"><span class="admin-badge" [class.pending]="change.kind !== 'added'">{{ kindLabel(change.kind) }}</span>
+              <h3>{{ change.title }}</h3><small>{{ change.key === '@details' ? '' : change.key }}</small>
+            </div>
+            <div class="admin-table-wrap flush"><table class="admin-table">
+              <thead><tr><th>{{ locale.text('Setting', 'الإعداد') }}</th><th>{{ locale.text('Before', 'قبل') }}</th><th>{{ locale.text('After approval', 'بعد الموافقة') }}</th></tr></thead>
+              <tbody>@for (row of change.rows; track row.key) {
+                <tr><td>{{ locale.text(row.en, row.ar) }}</td><td class="before">{{ display(row.before) }}</td><td class="after">{{ display(row.after) }}</td></tr>
+              }</tbody>
+            </table></div>
+          </section>
+        } @empty {
+          <section class="admin-panel review-intro"><p>{{ locale.text('No field or detail changes. Publication will still verify that this definition is ready to use.', 'لا توجد تغييرات في الحقول أو التفاصيل. سيظل النشر يتحقق من جاهزية التعريف للاستخدام.') }}</p></section>
+        }
+      </div>
+      <details class="admin-panel review-details">
+        <summary>{{ locale.text('Full version contents', 'محتوى الإصدار الكامل') }} · {{ p.definition.fields.length }} {{ locale.text('fields', 'حقول') }}</summary>
+        <p>{{ p.definition.type.nameEn }} · {{ p.definition.type.nameAr }}</p>
+        <p>{{ locale.text('Workflow', 'سير العمل') }}: {{ p.definition.type.workflowCode || '—' }}</p>
+        <div class="admin-table-wrap flush"><table class="admin-table"><thead><tr><th>{{ locale.text('Field', 'الحقل') }}</th><th>{{ locale.text('Type', 'النوع') }}</th><th>{{ locale.text('Required', 'مطلوب') }}</th></tr></thead>
+          <tbody>@for (field of p.definition.fields; track field.fieldKey) { <tr><td>{{ field.labelEn }}<small>{{ field.labelAr }} · {{ field.fieldKey }}</small></td><td>{{ field.dataType }}</td><td>{{ display(field.required) }}</td></tr> }</tbody>
+        </table></div>
+      </details>
+      @if (p.publicationState === 'SCHEMA_PENDING') {
+        <section class="admin-panel review-intro" role="status">
+          <h2>{{ locale.text('Validation', 'التحقق') }}</h2>
+          <span class="admin-badge" [class.pending]="p.validationStatus === 'NOT_RUN'" [class.failed]="p.validationStatus === 'FAILED'">{{ p.validationStatus === 'PASSED' ? locale.text('Passed', 'ناجح') : p.validationStatus === 'FAILED' ? locale.text('Failed', 'فشل') : locale.text('Not run', 'لم يُنفذ') }}</span>
+          <p>{{ p.validationMessage || locale.text('Validate checks this version without applying or publishing it.', 'يفحص التحقق هذا الإصدار دون تطبيقه أو نشره.') }}</p>
+          @if (p.validatedAt) { <p>{{ p.validatedBy }} · {{ p.validatedAt | date:'medium' }}</p> }
+        </section>
+        <section class="admin-panel review-actions">
+          <p>{{ locale.text('Approval publishes this version after final verification. Rejection keeps the current published version.', 'تنشر الموافقة هذا الإصدار بعد التحقق النهائي. يحافظ الرفض على الإصدار المنشور الحالي.') }}</p>
+          <div>
+            <button class="admin-button secondary" type="button" (click)="validate()" [disabled]="busy() || !!blockReason()">{{ locale.text('Validate', 'تحقق') }}</button>
+            <button class="admin-button primary" type="button" (click)="approve()" [disabled]="busy() || !!blockReason() || p.validationStatus !== 'PASSED'">{{ locale.text('Approve', 'موافقة') }}</button>
+            <button class="admin-button secondary" type="button" (click)="rejectOpen.set(true)" [disabled]="busy()">{{ locale.text('Reject', 'رفض') }}</button>
+          </div>
+          @if (busy()) { <span>{{ locale.text('Processing…', 'جارٍ التنفيذ…') }}</span> }
+        </section>
+        @if (rejectOpen()) {
+          <form class="admin-panel review-intro" (ngSubmit)="reject()">
+            <label for="rejection-reason"><strong>{{ locale.text('Reason for rejection', 'سبب الرفض') }}</strong></label>
+            <textarea id="rejection-reason" name="reason" [(ngModel)]="rejectionReason" required maxlength="2000" rows="3" style="display:block;width:100%;box-sizing:border-box;margin:1rem 0;padding:.8rem"></textarea>
+            <div class="admin-form-actions"><button type="button" class="admin-button secondary" (click)="rejectOpen.set(false)" [disabled]="busy()">{{ locale.text('Cancel', 'إلغاء') }}</button><button type="submit" class="admin-button primary" [disabled]="busy() || !rejectionReason.trim()">{{ locale.text('Reject version', 'رفض الإصدار') }}</button></div>
+          </form>
+        }
+      }
+      <details class="admin-panel review-details">
+        <summary>{{ locale.text('Database changes', 'تغييرات قاعدة البيانات') }} · {{ p.plan.operations.length }}</summary>
+        <p>{{ locale.text('These are the exact operations included in this review.', 'هذه هي العمليات الدقيقة المشمولة في هذه المراجعة.') }}</p>
+        @for (op of p.plan.operations; track $index) {
+          <div class="sql-operation"><strong>{{ op.target }}</strong><p>{{ op.reason }}</p><pre dir="ltr">{{ op.sql }}</pre></div>
+        } @empty { <p>{{ locale.text('No database changes are needed. Verification is still required.', 'لا توجد تغييرات مطلوبة في قاعدة البيانات. لا يزال التحقق مطلوبًا.') }}</p> }
+        <details><summary>{{ locale.text('Audit details', 'تفاصيل التدقيق') }}</summary>
+          <p>{{ locale.text('Definition fingerprint', 'بصمة التعريف') }}: <code>{{ p.definitionFingerprint }}</code></p>
+          <p>{{ locale.text('Plan fingerprint', 'بصمة الخطة') }}: <code>{{ p.planFingerprint }}</code></p>
+          @if (p.verificationEvidence) { <p>{{ p.verificationEvidence }}</p> }
+        </details>
+      </details>
+    }
