@@ -1,0 +1,104 @@
+.external-check {
+  background: #f6f9f8;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin: 1rem 0;
+  padding: .9rem;
+}
+
+.external-check[data-status='SUCCESS'] { background: #eaf8f1; border-color: #bfe1d2; }
+.external-check[data-status='REJECTED'],
+.external-check[data-status='RETURN_APPLICANT'] { background: #fff5e8; border-color: #eed4ac; }
+.external-check header { align-items: start; display: flex; gap: .6rem; justify-content: space-between; }
+.external-check header div { display: grid; gap: .15rem; }
+.external-check header div span { color: var(--muted); font-size: .65rem; font-weight: 800; text-transform: uppercase; }
+.external-check header strong { font-size: .8rem; }
+.check-status { background: #fff; border-radius: 999px; font-size: .62rem; font-weight: 850; padding: .25rem .5rem; }
+.external-check p { color: #52645e; font-size: .74rem; line-height: 1.5; margin: .65rem 0; }
+.external-check > small { color: var(--muted); display: block; font-size: .62rem; overflow-wrap: anywhere; }
+.check-actions { display: flex; gap: .4rem; margin-top: .75rem; }
+.check-actions .task-button { font-size: .68rem; padding: .5rem .65rem; }
+
+.decision-form fieldset {
+  background: #f7faf8;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin: 0;
+  padding: .85rem;
+}
+
+.decision-form legend {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  padding: .32rem .65rem;
+  text-transform: uppercase;
+}
+
+.decision-options { display: grid; gap: .55rem; margin-top: .25rem; }
+
+.decision-options > button {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #d7e1dd;
+  border-radius: 12px;
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: .7rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 64px;
+  padding: .7rem;
+  text-align: start;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+  width: 100%;
+}
+
+.decision-options > button:hover {
+  border-color: #8ab6a6;
+  box-shadow: 0 6px 16px rgb(20 80 62 / 9%);
+  transform: translateY(-1px);
+}
+
+.decision-options > button.selected {
+  background: #edf8f3;
+  border-color: #17825f;
+  box-shadow: 0 0 0 3px rgb(23 130 95 / 13%);
+}
+
+.decision-options > button > span {
+  background: #e3f3ed;
+  border-radius: 10px;
+  color: #176b4f;
+  display: grid;
+  font-size: 1rem;
+  font-weight: 900;
+  height: 38px;
+  place-items: center;
+  width: 38px;
+}
+
+.decision-options > button[data-outcome='REJECTED'] > span { background: #ffebee; color: #a42d3e; }
+.decision-options > button[data-outcome='RETURN_PREVIOUS'] > span { background: #fff1d8; color: #8b6200; }
+.decision-options > button[data-outcome='RETURN_APPLICANT'] > span { background: #f0eaff; color: #6943a3; }
+.decision-options > button[data-outcome='REJECTED'].selected { background: #fff5f6; border-color: #b63c4e; box-shadow: 0 0 0 3px rgb(182 60 78 / 12%); }
+.decision-options > button[data-outcome='RETURN_PREVIOUS'].selected { background: #fff9ed; border-color: #b47d00; box-shadow: 0 0 0 3px rgb(180 125 0 / 12%); }
+.decision-options > button[data-outcome='RETURN_APPLICANT'].selected { background: #f8f5ff; border-color: #7650ad; box-shadow: 0 0 0 3px rgb(118 80 173 / 12%); }
+.decision-options > button div { display: grid; gap: .18rem; min-width: 0; }
+.decision-options > button strong { font-size: .78rem; }
+.decision-options > button small { color: var(--muted); font-size: .66rem; line-height: 1.4; }
+.decision-warning { background: #fff8e8; border: 1px solid #f0dfb9; border-radius: 10px; color: #74613b; font-size: .72rem; line-height: 1.45; padding: .7rem; }
+
+@media (max-width: 950px) {
+  .decision-card > .external-check { grid-column: 1 / -1; }
+  .decision-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .decision-options { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,32 @@
+.page-heading { margin-bottom: 1.5rem; position: relative; }
+.back { color: var(--muted); text-decoration: none; }
+.eyebrow { color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .1em; margin: 1.2rem 0 .25rem; }
+h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3rem); }
+.status { display: inline-block; margin-top: .65rem; padding: .3rem .65rem; border-radius: 999px; background: #e8f4ef; color: #176b4f; font-size: .78rem; font-weight: 800; }
+.dynamic-form, .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: clamp(1rem, 3vw, 2rem); box-shadow: var(--shadow); }
+.dynamic-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.section-title, .wide, .actions, .notice { grid-column: 1 / -1; }
+.section-title { padding-top: 1rem; border-bottom: 1px solid var(--border); }
+.section-title h2 { margin: 0 0 .35rem; }
+.section-title p { margin: 0 0 1rem; color: var(--muted); }
+.field { display: flex; flex-direction: column; gap: .45rem; }
+.field > label { font-weight: 750; }
+.field small { color: var(--muted); }
+.required, .error-text { color: var(--danger) !important; }
+input, textarea, select { width: 100%; box-sizing: border-box; border: 1px solid var(--border-strong); border-radius: 12px; padding: .8rem .9rem; background: #fff; color: var(--ink); font: inherit; }
+select[multiple] { min-height: 8rem; }
+input:focus, textarea:focus, select:focus { outline: 3px solid color-mix(in srgb, var(--accent) 20%, transparent); border-color: var(--accent); }
+.toggle { min-height: 45px; display: flex; align-items: center; gap: .6rem; }
+.toggle input { width: 1.2rem; }
+.money { display: flex; align-items: center; gap: .5rem; }
+.money span { color: var(--muted); font-weight: 800; }
+.file-name { display: block; }
+.actions { display: flex; justify-content: flex-end; gap: .75rem; padding-top: 1rem; }
+button { border: 0; border-radius: 12px; padding: .8rem 1.15rem; font: inherit; font-weight: 800; cursor: pointer; }
+button:disabled { opacity: .55; cursor: wait; }
+.primary { background: var(--accent); color: #fff; }
+.secondary { background: #eef2f0; color: var(--ink); }
+.notice { padding: .85rem 1rem; border-radius: 12px; }
+.notice.error { color: #8b1e2d; background: #fff0f2; }
+.notice.success { color: #126044; background: #ebf8f2; }
+@media (max-width: 720px) { .dynamic-form { grid-template-columns: 1fr; } .field { grid-column: 1; } .actions { flex-direction: column; } }

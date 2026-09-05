@@ -1,0 +1,45 @@
+<header class="list-heading">
+  <div><p class="eyebrow">DISCOVERY</p><h1>{{ locale.locale() === 'ar' ? 'البحث في التصاريح' : 'Permit search' }}</h1></div>
+  <div class="mode-switch"><button type="button" [class.active]="mode() === 'quick'" (click)="setMode('quick')">Quick</button><button type="button" [class.active]="mode() === 'advanced'" (click)="setMode('advanced')">Advanced</button></div>
+</header>
+
+<section class="search-panel">
+  <label>Permit Type<select [(ngModel)]="selectedType" (ngModelChange)="typeChanged()"><option value="">All Permit Types</option>@for (type of permitTypes(); track type.code) { <option [value]="type.code">{{ typeLabel(type) }}</option> }</select></label>
+  @if (mode() === 'quick') {
+    <label class="wide">Keyword<input [(ngModel)]="keyword" (keyup.enter)="run(0)" placeholder="Reference, Event, or Permit data"></label>
+    <label>Status<select [(ngModel)]="status"><option value="">Any status</option><option>DRAFT</option><option>IN_REVIEW</option><option>RETURNED_TO_APPLICANT</option><option>APPROVED</option><option>REJECTED</option></select></label>
+    <label>Event starts after<input type="date" [(ngModel)]="dateFrom"></label>
+    <label>Event ends before<input type="date" [(ngModel)]="dateTo"></label>
+  } @else {
+    <div class="logic"><span>Group logic</span><select [(ngModel)]="logic"><option>AND</option><option>OR</option></select></div>
+    <div class="conditions wide">
+      @for (draft of conditions(); track $index; let index = $index) {
+        <div class="condition-row">
+          <select [ngModel]="draft.fieldToken" (ngModelChange)="updateCondition(index, 'fieldToken', $event); fieldChanged(index)"><option value="">Select field</option>@for (field of eligibleFields(); track fieldToken(field)) { <option [value]="fieldToken(field)">{{ field.permitTypeCode ? field.permitTypeCode + ' · ' : '' }}{{ fieldLabel(field) }}</option> }</select>
+          <select [ngModel]="draft.operator" (ngModelChange)="updateCondition(index, 'operator', $event)"><option value="">Operator</option>@for (operator of selectedField(draft)?.operators ?? []; track operator) { <option [value]="operator">{{ operator }}</option> }</select>
+          @if (!noValue(draft.operator)) {
+            @if (selectedField(draft)?.lookupCode && !listValue(draft.operator)) {
+              <select [ngModel]="draft.value" (ngModelChange)="updateCondition(index, 'value', $event)"><option value="">Select value</option>@for (value of values(draft); track value.id) { <option [value]="value.code">{{ locale.text(value.labelEn, value.labelAr) }}</option> }</select>
+            } @else if (selectedField(draft)?.dataType === 'BOOLEAN') {
+              <select [ngModel]="draft.value" (ngModelChange)="updateCondition(index, 'value', $event)"><option value="true">True</option><option value="false">False</option></select>
+            } @else {
+              <input [ngModel]="draft.value" (ngModelChange)="updateCondition(index, 'value', $event)" [placeholder]="listValue(draft.operator) ? 'Comma-separated values' : 'Value'">
+            }
+          } @else { <span class="no-value">No value</span> }
+          <button type="button" class="icon" (click)="removeCondition(index)" [disabled]="conditions().length === 1">×</button>
+        </div>
+      }
+      <button type="button" class="add" (click)="addCondition()">+ Add condition to {{ logic }} group</button>
+    </div>
+  }
+  <button type="button" class="search-button" (click)="run(0)" [disabled]="loading()">{{ loading() ? 'Searching…' : 'Search' }}</button>
+</section>
+
+@if (error()) { <div class="empty error">{{ error() }}</div> }
+@if (result(); as page) {
+  <div class="result-summary"><strong>{{ page.totalElements }}</strong><span>matching applications</span></div>
+  <div class="results">@for (hit of page.content; track hit.applicationId) {
+    <a [routerLink]="['/applications', hit.applicationId, 'form']"><div><span class="status">{{ hit.status }}</span><small>{{ hit.referenceNo }}</small></div><h2>{{ hitType(hit) }}</h2><p>{{ hitEvent(hit) }} · {{ hit.eventReferenceNo }}</p><footer><span>{{ hit.createdAt.substring(0, 10) }}</span><strong>{{ hit.permitTypeCode }}</strong></footer></a>
+  } @empty { <div class="empty">No matching Permit Applications</div> }</div>
+  @if (page.totalPages > 1) { <nav class="pager"><button type="button" (click)="run(page.page - 1)" [disabled]="page.page === 0">Previous</button><span>{{ page.page + 1 }} / {{ page.totalPages }}</span><button type="button" (click)="run(page.page + 1)" [disabled]="page.page + 1 >= page.totalPages">Next</button></nav> }
+}

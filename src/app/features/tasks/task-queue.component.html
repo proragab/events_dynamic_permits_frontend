@@ -1,0 +1,37 @@
+<header class="task-page-header">
+  <div><p class="task-eyebrow">WORKFLOW CENTER</p><h1>My review tasks</h1><p>Open a task to review the complete event or permit record before making a decision.</p></div>
+  <button class="task-button secondary" type="button" (click)="loadQueue()" [disabled]="loading()">Refresh queue</button>
+</header>
+
+<section class="task-summary-grid" aria-label="Task summary">
+  <article><span class="summary-icon ready">R</span><div><strong>{{ readyCount() }}</strong><span>Ready to claim</span></div></article>
+  <article><span class="summary-icon progress">W</span><div><strong>{{ claimedCount() }}</strong><span>In progress</span></div></article>
+  <article><span class="summary-icon event">E</span><div><strong>{{ eventCount() }}</strong><span>Event reviews</span></div></article>
+  <article><span class="summary-icon permit">P</span><div><strong>{{ permitCount() }}</strong><span>Permit reviews</span></div></article>
+</section>
+
+<section class="task-list-panel">
+  <header class="task-list-toolbar">
+    <div><h2>Action required</h2><p>{{ filteredTasks().length }} of {{ tasks().length }} tasks</p></div>
+    <div class="task-filters">
+      <label class="task-search"><span class="visually-hidden">Search tasks</span><input #query type="search" [value]="search()" (input)="setSearch(query.value)" placeholder="Search by title, workflow, or ID"></label>
+      <label><span class="visually-hidden">Task status</span><select #statusFilter [value]="status()" (change)="setStatus(statusFilter.value)"><option value="ALL">All statuses</option><option value="READY">Ready to claim</option><option value="IN_PROGRESS">In progress</option></select></label>
+    </div>
+  </header>
+  @if (error()) { <div class="task-alert error">{{ error() }}</div> }
+  @if (loading()) {
+    <div class="task-empty"><span class="task-loader"></span><h3>Loading your queue</h3></div>
+  } @else if (!filteredTasks().length) {
+    <div class="task-empty"><span class="empty-check">✓</span><h3>{{ tasks().length ? 'No tasks match these filters' : 'Your queue is clear' }}</h3><p>{{ tasks().length ? 'Try another search or status.' : 'There are no actionable tasks assigned to this role.' }}</p></div>
+  } @else {
+    <div class="task-cards">
+      @for (task of filteredTasks(); track task.id) {
+        <a class="task-card" [routerLink]="['/tasks', task.id]">
+          <span class="subject-mark" [attr.data-type]="task.subjectType">{{ task.subjectType === 'EVENT' ? 'E' : 'P' }}</span>
+          <div class="task-card-main"><div class="task-card-meta"><span>{{ subjectLabel(task) }}</span><span>Round {{ task.round }}</span><span>{{ task.workflowCode }}</span></div><h3>{{ locale.text(task.titleEn, task.titleAr) }}</h3><p>{{ task.subjectType }} #{{ task.subjectId }} · Step {{ task.stepCode }}</p></div>
+          <div class="task-card-side"><span class="task-status" [attr.data-status]="task.status">{{ statusLabel(task.status) }}</span><small>{{ dueLabel(task.dueAt) }}</small><strong>Review task <span aria-hidden="true">→</span></strong></div>
+        </a>
+      }
+    </div>
+  }
+</section>

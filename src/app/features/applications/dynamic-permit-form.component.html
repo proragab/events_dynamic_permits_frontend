@@ -1,0 +1,54 @@
+<section class="page-heading">
+  <a routerLink="/" class="back">← {{ locale.locale() === 'ar' ? 'الرئيسية' : 'Home' }}</a>
+  <p class="eyebrow">{{ application()?.referenceNo }}</p>
+  <h1>{{ locale.text(definition()?.type?.nameEn, definition()?.type?.nameAr) }}</h1>
+  <span class="status">{{ application()?.status }}</span>
+</section>
+
+@if (loading()) {
+  <div class="panel loading">{{ locale.locale() === 'ar' ? 'جارٍ التحميل…' : 'Loading form…' }}</div>
+} @else if (definition()) {
+  <form class="dynamic-form" [formGroup]="form" (ngSubmit)="save()">
+    @for (field of fields(); track field.fieldKey) {
+      @if (field.dataType === 'SECTION') {
+        <header class="section-title"><h2>{{ label(field) }}</h2><p>{{ help(field) }}</p></header>
+      } @else {
+        <div class="field" [class.wide]="field.dataType === 'LONGTEXT' || field.dataType === 'FILE'">
+          <label [for]="field.fieldKey">{{ label(field) }} @if (field.required) { <span class="required">*</span> }</label>
+          @switch (field.dataType) {
+            @case ('LONGTEXT') { <textarea [id]="field.fieldKey" [formControlName]="field.fieldKey" rows="5"></textarea> }
+            @case ('BOOLEAN') { <label class="toggle"><input type="checkbox" [formControlName]="field.fieldKey"><span>{{ locale.locale() === 'ar' ? 'نعم' : 'Yes' }}</span></label> }
+            @case ('DATE') { <input [id]="field.fieldKey" type="date" [formControlName]="field.fieldKey"> }
+            @case ('DATETIME') { <input [id]="field.fieldKey" type="datetime-local" [formControlName]="field.fieldKey"> }
+            @case ('INTEGER') { <input [id]="field.fieldKey" type="number" step="1" [formControlName]="field.fieldKey"> }
+            @case ('DECIMAL') { <input [id]="field.fieldKey" type="number" step="any" [formControlName]="field.fieldKey"> }
+            @case ('MONEY') { <div class="money"><input [id]="field.fieldKey" type="number" step="0.01" [formControlName]="field.fieldKey"><span>SAR</span></div> }
+            @case ('LOOKUP') {
+              <select [id]="field.fieldKey" [formControlName]="field.fieldKey"><option [ngValue]="null">—</option>
+                @for (value of values(field); track value.id) { <option [ngValue]="value.id">{{ valueLabel(value) }}</option> }
+              </select>
+            }
+            @case ('MULTISELECT') {
+              <select [id]="field.fieldKey" [formControlName]="field.fieldKey" multiple>
+                @for (value of values(field); track value.id) { <option [ngValue]="value.id">{{ valueLabel(value) }}</option> }
+              </select>
+            }
+            @case ('FILE') {
+              <input [id]="field.fieldKey" type="file" [disabled]="readonlyMode()" (change)="selectFile(field, $event)">
+              @for (file of files(field); track file.fileRef) { <small class="file-name">{{ file.fileName }} · {{ file.sizeBytes }} bytes</small> }
+            }
+            @default { <input [id]="field.fieldKey" type="text" [formControlName]="field.fieldKey"> }
+          }
+          @if (help(field)) { <small>{{ help(field) }}</small> }
+          @if (invalid(field)) { <small class="error-text">{{ locale.locale() === 'ar' ? 'تحقق من قيمة الحقل' : 'Check this field value' }}</small> }
+        </div>
+      }
+    }
+    @if (error()) { <div class="notice error">{{ error() }}</div> }
+    @if (message()) { <div class="notice success">{{ message() }}</div> }
+    @if (!readonlyMode()) { <footer class="actions">
+      <button type="submit" class="secondary" [disabled]="saving()">{{ locale.locale() === 'ar' ? 'حفظ' : 'Save draft' }}</button>
+      <button type="button" class="primary" [disabled]="saving()" (click)="submit()">{{ locale.locale() === 'ar' ? 'تقديم الطلب' : 'Submit application' }}</button>
+    </footer> } @else { <div class="notice">This form is read-only while workflow processing is active or terminal.</div> }
+  </form>
+}

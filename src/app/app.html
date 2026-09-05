@@ -1,0 +1,40 @@
+<header class="site-header">
+  <a routerLink="/" class="brand">
+    <span class="brand-mark">إ</span>
+    <span><strong>ENJZ</strong><small>Events &amp; Permits</small></span>
+  </a>
+
+  <nav>
+    @if (canManageLifecycle()) {
+      <a routerLink="/events" routerLinkActive="active">{{ locale.locale() === 'ar' ? 'الفعاليات' : 'Events' }}</a>
+    }
+    @if (canWorkTasks()) {
+      <a routerLink="/tasks" routerLinkActive="active">{{ locale.locale() === 'ar' ? 'المهام' : 'Tasks' }}</a>
+    }
+    <a routerLink="/search" routerLinkActive="active">{{ locale.locale() === 'ar' ? 'البحث' : 'Search' }}</a>
+    @if (isAdmin()) {
+      <a routerLink="/admin" routerLinkActive="active">{{ locale.locale() === 'ar' ? 'الإدارة' : 'Admin' }}</a>
+    }
+  </nav>
+
+  <div class="session-controls">
+    <label>
+      <span>{{ locale.locale() === 'ar' ? 'الدور' : 'Role' }}</span>
+      <select #role [value]="primaryRole()" (change)="useRole(role.value)" aria-label="Role">
+        <option>ORGANIZER</option>
+        <option>REVIEWER</option>
+        <option>APPROVER</option>
+        <option>INSPECTOR</option>
+        <option>PLATFORM_ADMIN</option>
+      </select>
+    </label>
+    <button type="button" (click)="locale.toggle()">{{ locale.locale() === 'ar' ? 'EN' : 'عربي' }}</button>
+  </div>
+</header>
+
+<main><router-outlet /></main>
+
+<footer class="site-footer">
+  <span>ENJZ · 2026</span>
+  <span>{{ locale.locale() === 'ar' ? 'منصة الفعاليات والتصاريح' : 'Events & Permits Platform' }}</span>
+</footer>

@@ -1,0 +1,75 @@
+<header class="task-page-header review-header">
+  <div><a class="task-breadcrumb" routerLink="/tasks">← My review tasks</a><p class="task-eyebrow">{{ task()?.subjectType || 'WORKFLOW' }} REVIEW</p><h1>{{ task() ? locale.text(task()!.titleEn, task()!.titleAr) : 'Review task' }}</h1><p>Review the subject information and workflow record before taking action.</p></div>
+  @if (task(); as currentTask) { <div class="review-header-status"><span class="task-status" [attr.data-status]="currentTask.status">{{ statusLabel(currentTask.status) }}</span><span>{{ currentTask.workflowCode }} · Round {{ currentTask.round }}</span></div> }
+</header>
+
+@if (error()) { <div class="task-alert error standalone">{{ error() }}</div> }
+@if (message()) { <div class="task-alert success standalone">{{ message() }}</div> }
+@if (loading()) {
+  <div class="review-loading"><span class="task-loader"></span><h2>Preparing the complete review record</h2><p>Loading subject details, answers, and workflow history.</p></div>
+} @else if (task(); as currentTask) {
+  <div class="review-layout">
+    <main class="review-content">
+      @if (currentTask.subjectType === 'PERMIT' && application(); as permit) {
+        <section class="review-section permit-hero">
+          <div class="record-heading"><span class="record-icon permit">P</span><div><p class="task-eyebrow">PERMIT APPLICATION</p><h2>{{ permitTypeName(permit.permitTypeCode) }}</h2><p><code>{{ permit.referenceNo }}</code></p></div><span class="record-status">{{ statusLabel(permit.status) }}</span></div>
+          <dl class="fact-grid"><div><dt>Permit type</dt><dd>{{ permit.permitTypeCode }}</dd></div><div><dt>Activity location</dt><dd>{{ permit.locationText || 'Not specified' }}</dd></div><div><dt>Expected attendees</dt><dd>{{ permit.attendeeCount ?? 'Not specified' }}</dd></div><div><dt>Activity period</dt><dd>{{ formatDate(permit.activityFrom) }} — {{ formatDate(permit.activityTo) }}</dd></div><div><dt>Submitted</dt><dd>{{ formatDateTime(permit.submittedAt) }}</dd></div><div><dt>Created</dt><dd>{{ formatDateTime(permit.createdAt) }}</dd></div></dl>
+        </section>
+
+        <section class="review-section">
+          <header class="section-heading"><div><p class="task-eyebrow">APPLICATION DATA</p><h2>Submitted answers</h2><p>All fields supplied by the applicant, grouped by form section.</p></div><a class="inline-link" [routerLink]="['/applications', permit.id, 'form']">Open full form →</a></header>
+          @for (section of answerSections(); track section.title) {
+            <article class="answer-section"><h3>{{ section.title }}</h3><dl class="answer-grid">@for (field of section.fields; track field.fieldKey) { <div [class.wide-answer]="field.dataType === 'LONGTEXT' || field.dataType === 'FILE'"><dt>{{ locale.text(field.labelEn, field.labelAr) }}</dt><dd [class.not-provided]="displayAnswer(field) === 'Not provided'">{{ displayAnswer(field) }}</dd>@if (field.helpEn || field.helpAr) { <small>{{ locale.text(field.helpEn, field.helpAr) }}</small> }</div> }</dl></article>
+          } @empty { <div class="section-empty">No answer fields are configured for this permit type.</div> }
+        </section>
+      }
+
+      @if (event(); as eventRecord) {
+        <section class="review-section" [class.event-primary]="currentTask.subjectType === 'EVENT'">
+          <div class="record-heading"><span class="record-icon event">E</span><div><p class="task-eyebrow">{{ currentTask.subjectType === 'EVENT' ? 'EVENT UNDER REVIEW' : 'PARENT EVENT' }}</p><h2>{{ locale.text(eventRecord.nameEn, eventRecord.nameAr) }}</h2><p><code>{{ eventRecord.referenceNo }}</code></p></div><span class="record-status">{{ statusLabel(eventRecord.status) }}</span></div>
+          <dl class="fact-grid"><div><dt>Category</dt><dd>{{ eventRecord.categoryCode }}</dd></div><div><dt>Venue</dt><dd>{{ eventRecord.venueText || 'Not specified' }}</dd></div><div><dt>Expected attendees</dt><dd>{{ eventRecord.attendeeCount ?? 'Not specified' }}</dd></div><div><dt>Event period</dt><dd>{{ formatDate(eventRecord.startDate) }} — {{ formatDate(eventRecord.endDate) }}</dd></div><div><dt>Submitted</dt><dd>{{ formatDateTime(eventRecord.submittedAt) }}</dd></div><div><dt>Created</dt><dd>{{ formatDateTime(eventRecord.createdAt) }}</dd></div></dl>
+        </section>
+      }
+
+      @if (currentTask.subjectType === 'EVENT') {
+        <section class="review-section">
+          <header class="section-heading"><div><p class="task-eyebrow">RELATED RECORDS</p><h2>Permit applications</h2><p>Permits registered under this event.</p></div><strong class="record-count">{{ applications().length }}</strong></header>
+          @if (applications().length) { <div class="related-permits">@for (permit of applications(); track permit.id) { <article><span class="record-icon permit small">P</span><div><strong>{{ permitTypeName(permit.permitTypeCode) }}</strong><small>{{ permit.referenceNo }} · {{ permit.locationText || 'Location not specified' }}</small></div><span class="record-status">{{ statusLabel(permit.status) }}</span></article> }</div> }
+          @else { <div class="section-empty">No permit applications have been created for this event.</div> }
+        </section>
+      }
+
+      <section class="review-section workflow-history">
+        <header class="section-heading"><div><p class="task-eyebrow">AUDIT TRAIL</p><h2>Workflow history</h2><p>Every step, decision, comment, and previous round.</p></div></header>
+        @for (group of rounds(); track group.round) {
+          <article class="history-round"><h3><span>Round {{ group.round }}</span><small>{{ group.tasks.length }} steps</small></h3><div class="history-steps">@for (item of group.tasks; track item.id) { <div class="history-step" [class.current]="item.id === currentTask.id"><span class="step-index">{{ item.sequence }}</span><div><strong>{{ locale.text(item.titleEn, item.titleAr) }}</strong><p>{{ item.roleCode || item.kind }} · {{ statusLabel(item.status) }}@if (item.outcome) { · {{ outcomeLabel(item.outcome) }} }</p>@if (item.comment) { <blockquote>{{ item.comment }}</blockquote> }@if (item.completedAt) { <small>Completed {{ formatDateTime(item.completedAt) }}@if (item.completedBy) { by {{ item.completedBy }} }</small> }</div></div> }</div></article>
+        }
+      </section>
+    </main>
+
+    <aside class="decision-sidebar">
+      <section class="decision-card">
+        <p class="task-eyebrow">YOUR TASK</p><h2>Review decision</h2>
+        <dl class="task-facts"><div><dt>Step</dt><dd>{{ currentTask.stepCode }}</dd></div><div><dt>Assigned role</dt><dd>{{ currentTask.roleCode || '—' }}</dd></div><div><dt>Due</dt><dd>{{ formatDateTime(currentTask.dueAt) }}</dd></div>@if (currentTask.assignedTo) { <div><dt>Claimed by</dt><dd>{{ currentTask.assignedTo }}</dd></div> }</dl>
+        @if (externalCheck(); as check) { @if (check.status !== 'NOT_CONFIGURED') {
+          <section class="external-check" [attr.data-status]="check.status"><header><div><span>External check</span><strong>{{ check.adapterCode }}</strong></div><span class="check-status">{{ statusLabel(check.status) }}</span></header><p>{{ check.message || 'Run the configured check to obtain information for this decision.' }}</p>@if (check.correlationId) { <small>Correlation: <code>{{ check.correlationId }}</code> · Attempt {{ check.attempts }}</small> }
+            @if (currentTask.status === 'IN_PROGRESS') { <div class="check-actions"><button class="task-button secondary" type="button" (click)="runExternalCheck()" [disabled]="working() || check.status === 'PENDING'">{{ check.attempts ? 'Run again' : 'Run external check' }}</button>@if (check.status === 'PENDING') { <button class="task-button secondary" type="button" (click)="refreshExternalCheck()" [disabled]="working()">Refresh callback</button> }</div> }
+          </section>
+        } }
+        @if (currentTask.status === 'READY') {
+          <div class="decision-callout"><strong>Claim this task first</strong><p>Claiming prevents another reviewer from deciding it at the same time.</p></div><button class="task-button primary full" type="button" (click)="claim()" [disabled]="working()">{{ working() ? 'Claiming…' : 'Claim task' }}</button>
+        } @else if (currentTask.status === 'IN_PROGRESS' && options(); as taskOptions) {
+          <form class="decision-form" (ngSubmit)="decide()"><fieldset><legend>Choose an action</legend><div class="decision-options">@for (option of taskOptions.allowedOutcomes; track option) { <button type="button" [class.selected]="outcome === option" [attr.data-outcome]="option" (click)="selectOutcome(option)"><span>{{ option === 'APPROVED' ? '→' : option === 'REJECTED' ? '×' : '↩' }}</span><div><strong>{{ outcomeLabel(option) }}</strong><small>{{ outcomeDescription(option) }}</small></div></button> }</div></fieldset>
+            @if (isReturnOutcome() && taskOptions.returnTargetSteps.length) { <label><span>Return to step</span><select name="returnTarget" [(ngModel)]="returnTargetStep"><option value="">Use workflow default</option>@for (step of taskOptions.returnTargetSteps; track step) { <option [value]="step">{{ step }}</option> }</select></label> }
+            <label><span>Review comment</span><textarea name="comment" rows="5" maxlength="2000" [(ngModel)]="comment" placeholder="Explain the decision or provide clear correction instructions"></textarea><small>{{ comment.length }}/2000</small></label>
+            @if (!externalCheckReady()) { <div class="decision-warning">Complete the external check or wait for its callback before deciding.</div> }
+            <button class="task-button primary full" type="submit" [disabled]="working() || !outcome || !externalCheckReady()">{{ working() ? 'Recording decision…' : 'Confirm ' + outcomeLabel(outcome) }}</button>
+          </form>
+        } @else {
+          <div class="decision-complete"><span>✓</span><strong>Task completed</strong><p>@if (currentTask.outcome) { Outcome: {{ outcomeLabel(currentTask.outcome) }}. } This task is no longer actionable.</p></div><a class="task-button secondary full" routerLink="/tasks">Return to task queue</a>
+        }
+      </section>
+      <section class="review-guide"><strong>Before deciding</strong><ul><li>Confirm event and permit dates are consistent.</li><li>Review every submitted application field.</li><li>Use comments to give specific, actionable feedback.</li></ul></section>
+    </aside>
+  </div>
+}
