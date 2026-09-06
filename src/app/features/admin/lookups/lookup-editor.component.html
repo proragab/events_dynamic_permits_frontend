@@ -1,13 +1,11 @@
-
-  <header class="admin-page-header"><div><a class="admin-breadcrumb" routerLink="/admin/lookups">Lookups</a><p class="eyebrow">{{ isEdit ? 'EDIT LOOKUP' : 'NEW LOOKUP' }}</p>
-    <h1>{{ isEdit ? (lookup()?.nameEn || code) : 'Create lookup' }}</h1><p>{{ isEdit ? code + ' · ' + (lookup()?.values?.length || 0) + ' values' : 'Create the lookup first, then add its values on the edit screen.' }}</p></div>
-    <a class="admin-button secondary" routerLink="/admin/lookups">Back to list</a></header>
-  @if (error()) { <div class="admin-alert error">{{ error() }}</div> } @if (message()) { <div class="admin-alert success">{{ message() }}</div> }
+<header class="admin-page-header"><div><a class="admin-breadcrumb" routerLink="/admin/lookups">Lookups</a>
+    <h1>{{ isEdit ? (lookup()?.nameEn || code) : 'Create lookup' }}</h1><p>{{ isEdit ? code + ' · ' + (lookup()?.values?.length || 0) + ' values' : 'Name the list, then add the options applicants can choose.' }}</p></div></header>
+  @if (error()) { <div class="admin-alert error" role="alert">{{ error() }}</div> } @if (message()) { <div class="admin-alert success" role="status">{{ message() }}</div> }
   @if (loading()) { <div class="admin-empty">Loading lookup…</div> } @else {
-    @if (isEdit) { <nav class="admin-tabs"><button type="button" [class.active]="tab() === 'details'" (click)="tab.set('details')">Details</button><button type="button" [class.active]="tab() === 'values'" (click)="tab.set('values')">Values <span>{{ lookup()?.values?.length || 0 }}</span></button></nav> }
+    @if (isEdit) { <nav class="admin-tabs" aria-label="Lookup editor"><button type="button" [class.active]="tab() === 'details'" [attr.aria-pressed]="tab() === 'details'" (click)="tab.set('details')">Details</button><button type="button" [class.active]="tab() === 'values'" [attr.aria-pressed]="tab() === 'values'" (click)="tab.set('values')">Values <span>{{ lookup()?.values?.length || 0 }}</span></button></nav> }
     @if (tab() === 'details') {
       <form class="admin-panel admin-form" (ngSubmit)="saveLookup()"><div class="admin-panel-heading"><div><h2>Lookup details</h2><p>Names and availability for this reusable value list.</p></div></div>
-        <div class="admin-form-grid"><label><span>Code</span><input name="code" [(ngModel)]="form.code" [disabled]="isEdit" required placeholder="EVENT_CATEGORY"></label><span></span>
+        <div class="admin-form-grid"><label class="wide"><span>Code</span><input name="code" [(ngModel)]="form.code" [disabled]="isEdit" required placeholder="EVENT_CATEGORY"></label>
           <label><span>English name</span><input name="nameEn" [(ngModel)]="form.nameEn" required></label><label><span>Arabic name</span><input name="nameAr" [(ngModel)]="form.nameAr" required dir="rtl"></label></div>
         <div class="admin-check-row"><label><input type="checkbox" name="active" [(ngModel)]="form.active"> Active and available</label></div>
         <footer class="admin-form-actions"><a class="admin-button secondary" routerLink="/admin/lookups">Cancel</a><button class="admin-button primary" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : (isEdit ? 'Save changes' : 'Create lookup') }}</button></footer>
@@ -22,7 +20,7 @@
         </tbody></table></div> }
       </section>
       @if (valueEditorOpen()) { <form class="admin-panel admin-form admin-subeditor" (ngSubmit)="saveValue()">
-        <div class="admin-panel-heading"><div><p class="eyebrow">{{ editingValueId === null ? 'NEW VALUE' : 'EDIT VALUE' }}</p><h2>{{ editingValueId === null ? 'Value configuration' : valueForm.code }}</h2></div><button class="admin-close" type="button" (click)="closeValueEditor()">×</button></div>
+        <div class="admin-panel-heading"><div><p class="eyebrow">{{ editingValueId === null ? 'NEW VALUE' : 'EDIT VALUE' }}</p><h2>{{ editingValueId === null ? 'Value configuration' : valueForm.code }}</h2></div><button class="admin-close" type="button" (click)="closeValueEditor()" aria-label="Close value editor">×</button></div>
         <div class="admin-form-grid"><label><span>Code</span><input name="valueCode" [(ngModel)]="valueForm.code" [disabled]="editingValueId !== null" required></label><label><span>Sort order</span><input name="sortOrder" type="number" [(ngModel)]="valueForm.sortOrder" required></label>
           <label><span>English label</span><input name="labelEn" [(ngModel)]="valueForm.labelEn" required></label><label><span>Arabic label</span><input name="labelAr" [(ngModel)]="valueForm.labelAr" required dir="rtl"></label></div>
         <div class="admin-check-row"><label><input type="checkbox" name="valueActive" [(ngModel)]="valueForm.active"> Active</label></div>

@@ -1,39 +1,45 @@
-
-    <header class="admin-page-header">
-      <div><p class="eyebrow">ADMIN CONSOLE</p><h1>Platform configuration</h1>
-        <p>Manage each configuration area in its own workspace.</p></div>
+<header class="admin-page-header">
+      <div><h1>Administration</h1><p>Manage permit forms, selection lists, and approval steps.</p></div>
+      <a class="admin-button primary" routerLink="/admin/permit-types/new">New permit type</a>
     </header>
 
-    @if (error()) { <div class="admin-alert error">{{ error() }}</div> }
+    @if (error()) { <div class="admin-alert error" role="alert">{{ error() }}</div> }
 
-    <section class="admin-dashboard-grid" aria-label="Configuration areas">
-      <a class="admin-module-card" routerLink="/admin/permit-types">
-        <span class="admin-module-card__icon">PT</span>
-        <div><h2>Permit Types</h2><p>Design permit forms, fields, and physical schemas.</p></div>
-        <strong>{{ loading() ? '…' : permitCount() }}</strong><small>configured</small>
+    <section class="admin-directory" aria-label="Configuration areas" [attr.aria-busy]="loading()">
+      <a routerLink="/admin/permit-types">
+        <div><h2>Permit types</h2><p>Create forms and choose how applications are approved.</p></div>
+        <span class="admin-directory-count">{{ loading() || error() ? '—' : permitCount() }}<small> {{ permitCount() === 1 ? 'type' : 'types' }}</small></span>
+        <span class="admin-directory-arrow" aria-hidden="true">→</span>
       </a>
-      <a class="admin-module-card" routerLink="/admin/lookups">
-        <span class="admin-module-card__icon">LU</span>
-        <div><h2>Lookups</h2><p>Maintain reusable value lists used by permit fields.</p></div>
-        <strong>{{ loading() ? '…' : lookupCount() }}</strong><small>configured</small>
+      <a routerLink="/admin/definition-reviews">
+        <div><h2>Definition reviews</h2><p>Validate submitted changes, then approve or reject them.</p></div>
+        <span class="admin-directory-arrow" aria-hidden="true">→</span>
       </a>
-      <a class="admin-module-card" routerLink="/admin/workflows">
-        <span class="admin-module-card__icon">WF</span>
-        <div><h2>Workflows</h2><p>Assign approval tasks to roles and control routing.</p></div>
-        <strong>{{ loading() ? '…' : workflowCount() }}</strong><small>configured</small>
+      <a routerLink="/admin/definition-versions">
+        <div><h2>Versions</h2><p>View published, pending, and rejected definitions.</p></div>
+        <span class="admin-directory-arrow" aria-hidden="true">→</span>
       </a>
-      <a class="admin-module-card" routerLink="/admin/change-history">
-        <span class="admin-module-card__icon">CH</span>
-        <div><h2>Change History</h2><p>Review physical permit schema changes and their outcome.</p></div>
-        <strong>View</strong><small>audit trail</small>
+      <a routerLink="/admin/lookups">
+        <div><h2>Lookups</h2><p>Edit the reusable lists that appear in selection fields.</p></div>
+        <span class="admin-directory-count">{{ loading() || error() ? '—' : lookupCount() }}<small> {{ lookupCount() === 1 ? 'list' : 'lists' }}</small></span>
+        <span class="admin-directory-arrow" aria-hidden="true">→</span>
+      </a>
+      <a routerLink="/admin/workflows">
+        <div><h2>Workflows</h2><p>Set approval steps and assign the responsible roles.</p></div>
+        <span class="admin-directory-count">{{ loading() || error() ? '—' : workflowCount() }}<small> {{ workflowCount() === 1 ? 'workflow' : 'workflows' }}</small></span>
+        <span class="admin-directory-arrow" aria-hidden="true">→</span>
+      </a>
+      <a routerLink="/admin/change-history">
+        <div><h2>Change history</h2><p>Review permit schema changes and their results.</p></div>
+        <span class="admin-directory-arrow" aria-hidden="true">→</span>
       </a>
     </section>
 
-    <section class="admin-panel admin-getting-started">
-      <div><p class="eyebrow">RECOMMENDED ORDER</p><h2>Configure with confidence</h2></div>
+    <details class="admin-help">
+      <summary>Setting up for the first time?</summary>
       <ol>
-        <li><strong>Create lookups</strong><span>Add values used by selection fields.</span></li>
-        <li><strong>Build workflows</strong><span>Assign every human task to a platform role.</span></li>
-        <li><strong>Create permit types</strong><span>Add fields, review the schema plan, then apply it.</span></li>
+        <li><a routerLink="/admin/lookups/new">Create a lookup</a> for selection fields.</li>
+        <li><a routerLink="/admin/workflows/new">Build a workflow</a> with approval steps and roles.</li>
+        <li><a routerLink="/admin/permit-types/new">Create a permit type</a> and add its fields.</li>
       </ol>
-    </section>
+    </details>

@@ -1,33 +1,12 @@
-
-    <div class="admin-shell">
-      <aside class="admin-sidebar">
-        <a class="admin-sidebar__brand" routerLink="/admin">
-          <span class="admin-sidebar__mark">A</span>
-          <span><strong>Administration</strong><small>Platform configuration</small></span>
-        </a>
-        <nav aria-label="Administration sections">
-          <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-            <span>Overview</span><small>Console home</small>
-          </a>
-          <a routerLink="/admin/permit-types" routerLinkActive="active">
-            <span>Permit Types</span><small>Forms and schemas</small>
-          </a>
-          <a routerLink="/admin/definition-reviews" routerLinkActive="active">
-            <span>{{ locale.text('Definition reviews', 'مراجعة التعريفات') }}</span><small>{{ locale.text('Validate, approve or reject', 'تحقق، وافق أو ارفض') }}</small>
-          </a>
-          <a routerLink="/admin/definition-versions" routerLinkActive="active">
-            <span>{{ locale.text('Versions', 'الإصدارات') }}</span><small>{{ locale.text('Published and submitted versions', 'الإصدارات المنشورة والمرسلة') }}</small>
-          </a>
-          <a routerLink="/admin/lookups" routerLinkActive="active">
-            <span>Lookups</span><small>Reusable values</small>
-          </a>
-          <a routerLink="/admin/workflows" routerLinkActive="active">
-            <span>Workflows</span><small>Roles and approval steps</small>
-          </a>
-          <a routerLink="/admin/change-history" routerLinkActive="active">
-            <span>Change History</span><small>Permit schema audit</small>
-          </a>
-        </nav>
-      </aside>
-      <section class="admin-content"><router-outlet /></section>
-    </div>
+<div class="admin-shell">
+  <nav class="admin-navigation" aria-label="Administration sections">
+    <a routerLink="/admin" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">{{ locale.text('Overview', 'نظرة عامة') }}</a>
+    <a routerLink="/admin/permit-types" routerLinkActive="active" ariaCurrentWhenActive="page">{{ locale.text('Permit types', 'أنواع التصاريح') }}</a>
+    <a routerLink="/admin/definition-reviews" routerLinkActive="active" ariaCurrentWhenActive="page">{{ locale.text('Definition reviews', 'مراجعة التعريفات') }}</a>
+    <a routerLink="/admin/definition-versions" routerLinkActive="active" ariaCurrentWhenActive="page">{{ locale.text('Versions', 'الإصدارات') }}</a>
+    <a routerLink="/admin/lookups" routerLinkActive="active" ariaCurrentWhenActive="page">{{ locale.text('Lookups', 'القوائم المرجعية') }}</a>
+    <a routerLink="/admin/workflows" routerLinkActive="active" ariaCurrentWhenActive="page">{{ locale.text('Workflows', 'سير العمل') }}</a>
+    <a routerLink="/admin/change-history" routerLinkActive="active" ariaCurrentWhenActive="page">{{ locale.text('Change history', 'سجل التغييرات') }}</a>
+  </nav>
+  <section class="admin-content"><router-outlet /></section>
+</div>

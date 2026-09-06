@@ -1,7 +1,6 @@
-
-    <header class="admin-page-header">
-      <div><a class="admin-breadcrumb" routerLink="/admin">Administration</a><p class="eyebrow">AUDIT TRAIL</p>
-        <h1>Permit Change History</h1><p>Review physical schema changes across all permit types or focus on one definition.</p></div>
+<header class="admin-page-header">
+      <div>
+        <h1>Change history</h1><p>Review permit schema changes and their results.</p></div>
       <button class="admin-button secondary" type="button" (click)="load()" [disabled]="loading()">Refresh</button>
     </header>
     <section class="admin-history-summary" aria-label="Change summary">
@@ -15,26 +14,27 @@
         @for (type of types(); track type.code) { <option [value]="type.code">{{ type.nameEn }} ({{ type.code }})</option> }
       </select></label>
       <label><span>Status</span><select [(ngModel)]="selectedStatus"><option value="ALL">All statuses</option><option value="PLANNED">Planned</option><option value="APPROVED">Approved</option><option value="APPLIED">Applied</option><option value="FAILED">Failed</option><option value="REJECTED">Rejected</option></select></label>
-      <label class="admin-search"><span>Search changes</span><input [(ngModel)]="query" placeholder="Operation, target, reason, actor..."></label>
+      <label class="admin-search"><span>Search changes</span><input type="search" [(ngModel)]="query" placeholder="Operation, target, reason, actor..."></label>
       <span>{{ filteredChanges().length }} results</span>
     </section>
-    @if (error()) { <div class="admin-alert error">{{ error() }}</div> }
+    @if (error()) { <div class="admin-alert error" role="alert">{{ error() }}</div> }
     @if (loading()) { <div class="admin-empty">Loading permit change history...</div> }
+    @else if (error()) {}
     @else if (!filteredChanges().length) { <div class="admin-empty"><h2>No changes found</h2><p>No schema changes match the selected filters.</p></div> }
     @else {
       <div class="admin-table-wrap"><table class="admin-table admin-history-table">
-        <thead><tr><th>Permit type</th><th>Change</th><th>Target</th><th>Status</th><th>Requested</th><th>Applied</th><th></th></tr></thead>
+        <thead><tr><th>Permit type</th><th>Change</th><th>Status</th><th>Requested</th><th><span class="admin-sr-only">Actions</span></th></tr></thead>
         <tbody>@for (change of filteredChanges(); track change.id) {
           <tr [class.admin-history-row-open]="expandedChangeId() === change.id">
             <td><a class="admin-link" [routerLink]="['/admin/permit-types', change.permitTypeCode, 'edit']">{{ permitTypeName(change.permitTypeCode!) }}</a><small><code>{{ change.permitTypeCode }}</code></small></td>
             <td><strong>{{ operationLabel(change.operation) }}</strong><small>#{{ change.id }} - by {{ change.createdBy }}</small></td>
-            <td><code>{{ change.target }}</code>@if (change.reason) { <small>{{ change.reason }}</small> }@if (change.error) { <small class="admin-history-error">{{ change.error }}</small> }</td>
+
             <td><span class="admin-badge" [class.pending]="isPending(change)" [class.failed]="isFailed(change)">{{ change.status }}</span></td>
-            <td>{{ formatDate(change.createdAt || change.appliedAt) }}</td><td>{{ formatDate(change.appliedAt) }}</td>
+            <td>{{ formatDate(change.createdAt || change.appliedAt) }}</td>
             <td><button class="admin-link-button" type="button" (click)="toggleDetails(change.id)" [attr.aria-expanded]="expandedChangeId() === change.id">{{ expandedChangeId() === change.id ? 'Hide details' : 'View details' }}</button></td>
           </tr>
           @if (expandedChangeId() === change.id) {
-            <tr class="admin-history-detail-row"><td colspan="7">
+            <tr class="admin-history-detail-row"><td colspan="5">
               <section class="admin-history-detail" [attr.aria-label]="'Change ' + change.id + ' details'">
                 <header><div><p class="eyebrow">CHANGE #{{ change.id }}</p><h2>{{ operationLabel(change.operation) }}</h2></div>
                   <span class="admin-badge" [class.pending]="isPending(change)" [class.failed]="isFailed(change)">{{ change.status }}</span></header>

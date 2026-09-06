@@ -1,13 +1,13 @@
-
-  <header class="admin-page-header"><div><a class="admin-breadcrumb" routerLink="/admin">Administration</a><p class="eyebrow">PROCESS DESIGN</p>
-    <h1>Workflows</h1><p>Build approval paths and assign every human task to a role.</p></div>
+<header class="admin-page-header"><div>
+    <h1>Workflows</h1><p>Define approval steps and assign responsible roles.</p></div>
     <a class="admin-button primary" routerLink="/admin/workflows/new">New workflow</a></header>
-  <div class="admin-toolbar"><label class="admin-search"><span>Search workflows</span><input [(ngModel)]="query" placeholder="Name, code, subject…"></label><span>{{ filtered().length }} of {{ workflows().length }}</span></div>
-  @if (error()) { <div class="admin-alert error">{{ error() }}</div> }
+  <div class="admin-toolbar"><label class="admin-search"><span>Search workflows</span><input type="search" [(ngModel)]="query" placeholder="Name, code, subject…"></label><span>{{ filtered().length }} of {{ workflows().length }}</span></div>
+  @if (error()) { <div class="admin-alert error" role="alert">{{ error() }}</div> }
   @if (loading()) { <div class="admin-empty">Loading workflows…</div> }
-  @else if (!filtered().length) { <div class="admin-empty"><h2>No workflows found</h2><p>Change the search or create a new workflow.</p></div> }
-  @else { <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Workflow</th><th>Subject</th><th>Steps</th><th>Revision</th><th>Status</th><th></th></tr></thead>
-    <tbody>@for (workflow of filtered(); track workflow.code) { <tr><td><strong>{{ workflow.nameEn }}</strong><small><code>{{ workflow.code }}</code></small></td>
-      <td>{{ workflow.subjectType }} · {{ workflow.subjectCode }}</td><td>{{ workflow.steps.length }}</td><td>v{{ workflow.definitionRev }}</td>
+  @else if (error()) {}
+    @else if (!filtered().length) { <div class="admin-empty"><h2>No workflows found</h2><p>Change the search or create a new workflow.</p></div> }
+  @else { <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Workflow</th><th>Subject</th><th>Steps</th><th>Status</th><th><span class="admin-sr-only">Actions</span></th></tr></thead>
+    <tbody>@for (workflow of filtered(); track workflow.code) { <tr><td><a class="admin-link" [routerLink]="['/admin/workflows', workflow.code, 'edit']">{{ workflow.nameEn }}</a><small><code>{{ workflow.code }}</code></small></td>
+      <td>{{ workflow.subjectType }} · {{ workflow.subjectCode }}</td><td>{{ workflow.steps.length }}</td>
       <td><span class="admin-badge" [class.inactive]="!workflow.active">{{ workflow.active ? 'Active' : 'Draft' }}</span></td>
       <td><a class="admin-link" [routerLink]="['/admin/workflows', workflow.code, 'edit']">Edit</a></td></tr> }</tbody></table></div> }

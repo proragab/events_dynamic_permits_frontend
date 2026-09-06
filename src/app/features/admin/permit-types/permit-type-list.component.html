@@ -1,21 +1,22 @@
 
     <header class="admin-page-header">
-      <div><a class="admin-breadcrumb" routerLink="/admin">Administration</a><p class="eyebrow">CATALOG</p>
-        <h1>Permit Types</h1><p>Create and maintain permit definitions without mixing them with other settings.</p></div>
+      <div>
+        <h1>Permit Types</h1><p>Manage forms and their approval workflows.</p></div>
       <a class="admin-button primary" routerLink="/admin/permit-types/new">New permit type</a>
     </header>
     <div class="admin-toolbar">
-      <label class="admin-search"><span>Search permit types</span><input [(ngModel)]="query" placeholder="Name, code, category, workflow…"></label>
+      <label class="admin-search"><span>Search permit types</span><input type="search" [(ngModel)]="query" placeholder="Name, code, category, workflow…"></label>
       <span>{{ filtered().length }} of {{ types().length }}</span>
     </div>
-    @if (error()) { <div class="admin-alert error">{{ error() }}</div> }
+    @if (error()) { <div class="admin-alert error" role="alert">{{ error() }}</div> }
     @if (loading()) { <div class="admin-empty">Loading permit types…</div> }
+    @else if (error()) {}
     @else if (!filtered().length) { <div class="admin-empty"><h2>No permit types found</h2><p>Change the search or create a new permit type.</p></div> }
     @else {
       <div class="admin-table-wrap"><table class="admin-table">
-        <thead><tr><th>Permit type</th><th>Code</th><th>Workflow</th><th>{{ locale.text('Published version', 'الإصدار المنشور') }}</th><th>Service</th><th></th></tr></thead>
+        <thead><tr><th>Permit type</th><th>Workflow</th><th>{{ locale.text('Published version', 'الإصدار المنشور') }}</th><th>Service</th><th><span class="admin-sr-only">Actions</span></th></tr></thead>
         <tbody>@for (type of filtered(); track type.code) {
-          <tr><td><strong>{{ type.nameEn }}</strong><small>{{ type.nameAr }}</small></td><td><code>{{ type.code }}</code></td>
+          <tr><td><a class="admin-link" [routerLink]="['/admin/permit-types', type.code, 'edit']">{{ type.nameEn }}</a><small><code>{{ type.code }}</code> · {{ type.nameAr }}</small></td>
           <td>{{ type.workflowCode || 'Not assigned' }}</td><td>{{ activeVersion(type.code) === null ? locale.text('Not published', 'غير منشور') : 'v' + activeVersion(type.code) }}</td>
           <td><span class="admin-badge" [class.inactive]="!type.active">{{ type.active ? 'Enabled' : 'Disabled' }}</span></td>
           <td><a class="admin-link" [routerLink]="['/admin/permit-types', type.code, 'edit']">{{ locale.text('Edit draft', 'تعديل المسودة') }}</a> · <a class="admin-link" routerLink="/admin/definition-versions" [queryParams]="{ type: type.code }">{{ locale.text('Versions', 'الإصدارات') }}</a></td></tr>
